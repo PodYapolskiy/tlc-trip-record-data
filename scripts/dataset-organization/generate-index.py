@@ -10,6 +10,7 @@ def get_parquet_files_data(directory, replace_root=None):
     files_data = []
 
     for file in files:
+        print(f"processing: {file}")
         filename = os.path.basename(file)
         year, month = (
             filename.removeprefix("yellow_tripdata_")
