@@ -1,0 +1,12 @@
+[project]
+name = "dataset-organization"
+version = "0.1.0"
+description = "Collection of scripts to organize work with dataset"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "argparse>=1.4.0",
+    "httpx>=0.28.1",
+    "jinja2>=3.1.6",
+    "pyarrow>=19.0.1",
+]
