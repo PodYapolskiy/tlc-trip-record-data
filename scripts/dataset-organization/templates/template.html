@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light dark">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.classless.slate.min.css">
+    <title>big data</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+        rel="stylesheet">
+    <style>
+        html {
+            font-family: Roboto Mono;
+        }
+    </style>
+</head>
+
+<body data-theme="dark">
+    <main class="container">
+        <h1>data files</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th scope="col">year</th>
+                    <th scope="col">month</th>
+                    <th scope="col">size (mb)</th>
+                    <th scope="col">rows</th>
+                    <th scope="col">file</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for file in files %}
+                <tr>
+                    <th scope="row">{{ file.year }}</th>
+                    <td>{{ file.month }}</td>
+                    <td>{{ file.size }}</td>
+                    <td>{{ file.row_count }}</td>
+                    <td><a href="{{ file.file_path }}">{{ file.file_name }}</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+
+            {% if summary %}
+            <tfoot>
+                <tr class="summary">
+                    <th scope="row"><strong>{{ summary.title }}</strong></th>
+                    <td></td>
+                    <td>{{ summary.total_size }}</td>
+                    <td>{{ summary.total_rows }}</td>
+                    <td></td>
+                </tr>
+            </tfoot>
+            {% endif %}
+        </table>
+    </main>
+</body>
+
+</html>
