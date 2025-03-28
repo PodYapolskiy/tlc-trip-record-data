@@ -6,14 +6,14 @@ from jinja2 import Environment, FileSystemLoader
 
 
 def get_parquet_files_data(directory, replace_root=None):
-    files = sorted(glob.glob(f"{directory}/yellow_tripdata_*.parquet"))
+    files = sorted(glob.glob(f"{directory}/green_tripdata_*.parquet"))
     files_data = []
 
     for file in files:
         print(f"processing: {file}")
         filename = os.path.basename(file)
         year, month = (
-            filename.removeprefix("yellow_tripdata_")
+            filename.removeprefix("green_tripdata_")
             .removesuffix(".parquet")
             .split("-")
         )
