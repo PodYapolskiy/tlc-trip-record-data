@@ -45,7 +45,7 @@ def parse_args():
     parser.add_argument(
         "--file-prefix",
         type=str,
-        default="yellow_tripdata",
+        default="green_tripdata",
         help="Prefix for downloaded files",
     )
     parser.add_argument(
@@ -67,7 +67,7 @@ async def download_and_save(filepath, base_url, output_dir, semaphore):
     async with semaphore:
         full_path = os.path.join(output_dir, filepath)
         with open(full_path, "wb") as f:
-            async with httpx.AsyncClient() as client:
+            async with httpx.AsyncClient(timeout=300) as client:
                 async with client.stream("GET", base_url + filepath) as r:
                     async for chunk in r.aiter_bytes():
                         f.write(chunk)
