@@ -28,8 +28,8 @@ fi
 if [ -f "$BIN/uv" ]; then
     log "File $BIN/uv already exists"
 else
-    # UV_ARCHIVE="uv-i686-unknown-linux-gnu.tar.gz"
-    UV_ARCHIVE="uv-aarch64-apple-darwin.tar.gz" # for ARM Mac
+    UV_ARCHIVE="uv-i686-unknown-linux-gnu.tar.gz"
+    # UV_ARCHIVE="uv-aarch64-apple-darwin.tar.gz" # for ARM Mac
 
     if [ -d "$SCRIPTS/$UV_ARCHIVE" ]; then
         log "Directory $SCRIPTS/$UV_ARCHIVE already exists"

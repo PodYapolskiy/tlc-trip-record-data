@@ -30,3 +30,9 @@ $BIN/uv run "$SCRIPTS/dataset-organization/download-sources.py" \
     --file-extension parquet \
     --output-dir "$PROJECT_ROOT/data" \
     --max-concurrent 12
+
+$BIN/uv run merge-parquets.py \
+    --source-dir $PROJECT_ROOT/data \
+    --output-file $PROJECT_ROOT/data/green_data.parquet \
+    --prefix "green_tripdata_" \
+    --file-extension ".parquet"
