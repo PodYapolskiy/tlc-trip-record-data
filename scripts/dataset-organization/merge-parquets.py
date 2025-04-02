@@ -18,22 +18,38 @@ if __name__ == "__main__":
     parser.add_argument(
         "--source-dir",
         default="data",
+        type=str,
         help="Directory containing parquet files",
     )
     parser.add_argument(
         "--output-file",
         default="green_data.parquet",
+        type=str,
         help="Output file path",
     )
     parser.add_argument(
         "--prefix",
         default="green_tripdata_",
+        type=str,
         help="Prefix for downloaded files",
     )
     parser.add_argument(
         "--file-extension",
         default=".parquet",
+        type=str,
         help="File extension for downloaded files",
+    )
+    parser.add_argument(
+        "--compression",
+        default="uncompressed",
+        choices=["lz4", "uncompressed", "snappy", "gzip", "lzo", "brotli", "zstd"],
+        help="Compression type for output parquet file",
+    )
+    parser.add_argument(
+        "--compression-level",
+        default=None,
+        type=int,
+        help="Compression level. Only available for gzip, brotli, and zstd",
     )
 
     args = parser.parse_args()
@@ -54,11 +70,10 @@ if __name__ == "__main__":
             )
         )
 
+    sink_args = {"path": args.output_file, "compression": args.compression}
+    if args.compression in ["gzip", "brotli", "zstd"]:
+        sink_args["compression_level"] = args.compression_level
+
     print("merging parquet files")
-    pl.concat(lazy_frames, how="vertical_relaxed").sink_parquet(
-        args.output_file,
-        compression="zstd",
-        compression_level=22,
-        statistics=False,
-    )
+    pl.concat(lazy_frames, how="vertical_relaxed").sink_parquet(**sink_args)
     print("done!")

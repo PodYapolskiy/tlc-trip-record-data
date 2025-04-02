@@ -20,19 +20,32 @@ bash "$SCRIPTS/prepare-bin.sh"
 BIN="$SCRIPTS/bin"
 log "Identified binaries directory as $BIN"
 
-$BIN/uv run "$SCRIPTS/dataset-organization/download-sources.py" \
-    --base-url https://d37ci6vzurychx.cloudfront.net/trip-data/ \
-    --start-year 2014 \
-    --end-year 2024 \
-    --start-month 1 \
-    --end-month 12 \
-    --file-prefix green_tripdata \
-    --file-extension parquet \
-    --output-dir "$PROJECT_ROOT/data" \
-    --max-concurrent 12
+DATA="$PROJECT_ROOT/data"
+log "Identified data directory as $DATA"
 
-$BIN/uv run merge-parquets.py \
-    --source-dir $PROJECT_ROOT/data \
-    --output-file $PROJECT_ROOT/data/green_data.parquet \
-    --prefix "green_tripdata_" \
-    --file-extension ".parquet"
+if [ -d "$DATA/green_data.parquet"]; then
+    log "Downloading green data"
+    $BIN/uv run "$SCRIPTS/dataset-organization/download-sources.py" \
+        --base-url https://d37ci6vzurychx.cloudfront.net/trip-data/ \
+        --start-year 2014 \
+        --end-year 2024 \
+        --start-month 1 \
+        --end-month 12 \
+        --file-prefix green_tripdata \
+        --file-extension parquet \
+        --output-dir "$DATA" \
+        --max-concurrent 12
+
+    log "Merging green data"
+    $BIN/uv run merge-parquets.py \
+        --source-dir $DATA \
+        --output-file $DATA/green_data.parquet \
+        --prefix "green_tripdata_" \
+        --compression zstd \
+        --compression-level 22 \
+        --file-extension ".parquet"
+
+    log "Generated $DATA/green_data.parquet"
+else
+    log "Green data already exists"
+fi

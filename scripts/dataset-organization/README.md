@@ -68,6 +68,7 @@ This script will merge parquet files into a single file.
 ### Usage
 ```bash
 usage: merge-parquets.py [-h] [--source-dir SOURCE_DIR] [--output-file OUTPUT_FILE] [--prefix PREFIX] [--file-extension FILE_EXTENSION]
+                         [--compression {lz4,uncompressed,snappy,gzip,lzo,brotli,zstd}] [--compression-level COMPRESSION_LEVEL]
 
 Generate report from parquet files.
 
@@ -80,6 +81,10 @@ options:
   --prefix PREFIX       Prefix for downloaded files
   --file-extension FILE_EXTENSION
                         File extension for downloaded files
+  --compression {lz4,uncompressed,snappy,gzip,lzo,brotli,zstd}
+                        Compression type for output parquet file
+  --compression-level COMPRESSION_LEVEL
+                        Compression level. Only available for gzip, brotli, and zstd
 ```
 
 ### Example
