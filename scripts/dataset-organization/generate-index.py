@@ -1,3 +1,13 @@
+# /// script
+# requires-python = ">=3.12,<3.13"
+# dependencies = [
+#     "argparse>=1.4.0",
+#     "jinja2>=3.1.6",
+#     "pyarrow>=19.0.1",
+# ]
+# ///
+
+
 import glob
 import os
 import argparse
@@ -13,9 +23,7 @@ def get_parquet_files_data(directory, replace_root=None):
         print(f"processing: {file}")
         filename = os.path.basename(file)
         year, month = (
-            filename.removeprefix("green_tripdata_")
-            .removesuffix(".parquet")
-            .split("-")
+            filename.removeprefix("green_tripdata_").removesuffix(".parquet").split("-")
         )
         size = os.path.getsize(file) / 1024 / 1024
         row_count = pq.read_metadata(file).num_rows

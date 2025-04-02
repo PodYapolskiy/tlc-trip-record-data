@@ -1,4 +1,15 @@
+# /// script
+# requires-python = ">=3.12,<3.13"
+# dependencies = [
+#     "argparse>=1.4.0",
+#     "httpx>=0.28.1",
+# ]
+# ///
+
+
 import asyncio
+from types import CoroutineType
+from typing import Any
 import httpx
 import argparse
 import os
@@ -63,7 +74,12 @@ def parse_args():
     return parser.parse_args()
 
 
-async def download_and_save(filepath, base_url, output_dir, semaphore):
+async def download_and_save(
+    filepath: str,
+    base_url: str,
+    output_dir: str,
+    semaphore: asyncio.Semaphore,
+):
     async with semaphore:
         full_path = os.path.join(output_dir, filepath)
         with open(full_path, "wb") as f:
@@ -83,7 +99,7 @@ async def main():
     if not os.path.exists(args.output_dir):
         os.makedirs(args.output_dir)
 
-    jobs = []
+    jobs: list[CoroutineType[Any, Any, None]] = []
 
     for year in range(args.start_year, args.end_year + 1):
         for month in range(args.start_month, args.end_month + 1):
