@@ -47,3 +47,11 @@ else
     log "Removing $SCRIPTS/$UV_ARCHIVE"
     rm -r "$SCRIPTS/${UV_ARCHIVE%%.*}" "$SCRIPTS/$UV_ARCHIVE"
 fi
+
+log "Loading environment variables"
+
+export -x POSTGRES_USERNAME=$(cat "$PROJECT_ROOT/secrets/POSTGRES_USERNAME")
+export -x POSTGRES_PASSWORD=$(cat "$PROJECT_ROOT/secrets/POSTGRES_PASSWORD")
+export -x POSTGRES_HOST=$(cat "$PROJECT_ROOT/secrets/POSTGRES_HOST")
+export -x POSTGRES_PORT=$(cat "$PROJECT_ROOT/secrets/POSTGRES_PORT")
+export -x POSTGRES_DATABASE=$(cat "$PROJECT_ROOT/secrets/POSTGRES_DATABASE")

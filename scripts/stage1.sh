@@ -37,7 +37,7 @@ if [ -d "$DATA/green_data.parquet"]; then
         --max-concurrent 12
 
     log "Merging green data"
-    $BIN/uv run merge-parquets.py \
+    $BIN/uv run "$SCRIPTS/dataset-organization/merge-parquets.py" \
         --source-dir $DATA \
         --output-file $DATA/green_data.parquet \
         --prefix "green_tripdata_" \
@@ -49,3 +49,13 @@ if [ -d "$DATA/green_data.parquet"]; then
 else
     log "Green data already exists"
 fi
+
+$BIN/uv run "$SCRIPTS/dataset-organization/load-data-to-psql.py" \
+    --source-file $DATA/green_data.parquet \
+    --host $POSTGRES_HOST \
+    --port $POSTGRES_PORT \
+    --user $POSTGRES_USER \
+    --password $POSTGRES_PASSWORD \
+    --database $POSTGRES_DATABASE \
+    --table green_tripdata \
+    --force
