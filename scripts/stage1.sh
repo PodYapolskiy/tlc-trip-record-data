@@ -50,12 +50,32 @@ else
     log "Green data already exists"
 fi
 
+log "Loading data to PostgreSQL"
 $BIN/uv run "$SCRIPTS/dataset-organization/load-data-to-psql.py" \
     --source-file $DATA/green_data.parquet \
     --host $POSTGRES_HOST \
     --port $POSTGRES_PORT \
-    --user $POSTGRES_USER \
+    --user $POSTGRES_USERNAME \
     --password $POSTGRES_PASSWORD \
     --database $POSTGRES_DATABASE \
     --table green_tripdata \
     --force
+
+log "Deleted $DATA"
+rm -rf "$DATA"
+
+# todo: clean hdfs://user/$TEAMNAME/project/warehouse
+
+log "Loading data from PostgreSQL to cluster using scoop"
+sqoop import-all-tables \
+    --connect jdbc:postgresql:/$POSTGRES_HOST:$POSTGRES_PORT/$POSTGRES_DATABASE \
+    --username $POSTGRES_USERNAME \
+    --password $POSTGRES_PASSWORD \
+    --compression-codec=snappy \
+    --compress \
+    --as-avrodatafile \
+    --warehouse-dir=project/warehouse \
+    --m 1
+
+# todo: try zstd?
+# todo: move files to output?
