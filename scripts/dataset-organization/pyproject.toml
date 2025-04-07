@@ -8,5 +8,8 @@ dependencies = [
     "argparse>=1.4.0",
     "httpx>=0.28.1",
     "jinja2>=3.1.6",
+    "polars>=1.26.0",
+    "psycopg>=3.2.6",
     "pyarrow>=19.0.1",
+    "tqdm>=4.67.1",
 ]

@@ -18,7 +18,7 @@ uv sync
 You can use `download-sources.py` script to download dataset files.
 
 ### Usage
-```
+```bash
 usage: download-sources.py [-h] [--base-url BASE_URL] [--max-concurrent MAX_CONCURRENT] [--start-year START_YEAR] [--end-year END_YEAR] [--start-month START_MONTH] [--end-month END_MONTH]
                            [--file-prefix FILE_PREFIX] [--file-extension FILE_EXTENSION] [--output-dir OUTPUT_DIR]
 
@@ -61,12 +61,47 @@ uv run download-sources.py \
     --max-concurrent 12
 ```
 
+## Merge parquet files
+
+This script will merge parquet files into a single file.
+
+### Usage
+```bash
+usage: merge-parquets.py [-h] [--source-dir SOURCE_DIR] [--output-file OUTPUT_FILE] [--prefix PREFIX] [--file-extension FILE_EXTENSION]
+                         [--compression {lz4,uncompressed,snappy,gzip,lzo,brotli,zstd}] [--compression-level COMPRESSION_LEVEL]
+
+Generate report from parquet files.
+
+options:
+  -h, --help            show this help message and exit
+  --source-dir SOURCE_DIR
+                        Directory containing parquet files
+  --output-file OUTPUT_FILE
+                        Output file path
+  --prefix PREFIX       Prefix for downloaded files
+  --file-extension FILE_EXTENSION
+                        File extension for downloaded files
+  --compression {lz4,uncompressed,snappy,gzip,lzo,brotli,zstd}
+                        Compression type for output parquet file
+  --compression-level COMPRESSION_LEVEL
+                        Compression level. Only available for gzip, brotli, and zstd
+```
+
+### Example
+```bash
+uv run merge-parquets.py \
+    --source-dir $PROJECT/data \
+    --output-file $PROJECT/data/green_data.parquet \
+    --prefix "green_tripdata_" \
+    --file-extension ".parquet"
+```
+
 ## Generate report of downloaded files
 
 This script will generate a report in HTML, Markdown or Typst format and save it to a specified file. Optionally, you can include a summary row with totals.
 
 ### Usage
-```
+```bash
 usage: generate-index.py [-h] [--source-dir SOURCE_DIR] [--output-format {html,markdown,typst}] [--output-file OUTPUT_FILE] [--summary] [--replace-root REPLACE_ROOT]
 
 Generate report from parquet files.
