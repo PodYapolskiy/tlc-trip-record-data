@@ -28,7 +28,7 @@ fi
 if [ -f "$BIN/uv" ]; then
     log "File $BIN/uv already exists"
 else
-    UV_ARCHIVE="uv-i686-unknown-linux-gnu.tar.gz"
+    UV_ARCHIVE="uv-x86_64-unknown-linux-gnu.tar.gz"
     # UV_ARCHIVE="uv-aarch64-apple-darwin.tar.gz" # for ARM Mac
 
     if [ -d "$SCRIPTS/$UV_ARCHIVE" ]; then
@@ -47,12 +47,3 @@ else
     log "Removing $SCRIPTS/$UV_ARCHIVE"
     rm -r "$SCRIPTS/${UV_ARCHIVE%%.*}" "$SCRIPTS/$UV_ARCHIVE"
 fi
-
-log "Loading environment variables"
-
-export -x POSTGRES_USERNAME=$(cat "$PROJECT_ROOT/secrets/POSTGRES_USERNAME")
-export -x POSTGRES_PASSWORD=$(cat "$PROJECT_ROOT/secrets/POSTGRES_PASSWORD")
-export -x POSTGRES_HOST=$(cat "$PROJECT_ROOT/secrets/POSTGRES_HOST")
-export -x POSTGRES_PORT=$(cat "$PROJECT_ROOT/secrets/POSTGRES_PORT")
-export -x POSTGRES_DATABASE=$(cat "$PROJECT_ROOT/secrets/POSTGRES_DATABASE")
-export -x TEAMNAME=$(cat "$PROJECT_ROOT/secrets/TEAMNAME")

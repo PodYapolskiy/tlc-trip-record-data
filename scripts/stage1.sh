@@ -12,8 +12,10 @@ log() {
 SCRIPTS="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 log "Identified scripts directory as $SCRIPTS"
 
+. "$SCRIPTS/load-secrets.sh"
+
 PROJECT_ROOT="$(cd "$SCRIPTS/.." && pwd)"
-log "Identified root directory as $ROOT_DIR"
+log "Identified root directory as $PROJECT_ROOT"
 
 bash "$SCRIPTS/prepare-bin.sh"
 
@@ -23,7 +25,9 @@ log "Identified binaries directory as $BIN"
 DATA="$PROJECT_ROOT/data"
 log "Identified data directory as $DATA"
 
-if [ -d "$DATA/green_data.parquet"]; then
+if [ -f "$DATA/green_data.parquet" ]; then
+    log "Green data already exists"
+else
     log "Downloading green data"
     $BIN/uv run "$SCRIPTS/dataset-organization/download-sources.py" \
         --base-url https://d37ci6vzurychx.cloudfront.net/trip-data/ \
@@ -46,8 +50,6 @@ if [ -d "$DATA/green_data.parquet"]; then
         --file-extension ".parquet"
 
     log "Generated $DATA/green_data.parquet"
-else
-    log "Green data already exists"
 fi
 
 log "Loading data to PostgreSQL"
