@@ -9,6 +9,7 @@
 # ///
 
 import argparse
+import csv
 from pathlib import Path
 from tempfile import mkdtemp
 from psycopg.sql import SQL, Identifier
@@ -16,6 +17,14 @@ import polars as pl
 import psycopg
 from tqdm import tqdm
 
+script_dir = Path(__file__).parent
+sql_dir = script_dir.parent.parent / "sql"
+
+with open(sql_dir / "create-table.sql") as f:
+    CREATE_SQL = SQL(f.read())
+
+with open(sql_dir / "copy-data.sql") as f:
+    COPY_SQL = SQL(f.read())
 
 COLUMN_ORDER = [
     "vendorid",
@@ -39,54 +48,6 @@ COLUMN_ORDER = [
     "trip_type",
     "congestion_surcharge",
 ]
-COPY_SQL = SQL("""
-copy {} (
-    vendorid,
-    lpep_pickup_datetime,
-    lpep_dropoff_datetime,
-    store_and_fwd_flag,
-    ratecodeid,
-    pulocationid,
-    dolocationid,
-    passenger_count,
-    trip_distance,
-    fare_amount,
-    extra,
-    mta_tax,
-    tip_amount,
-    tolls_amount,
-    ehail_fee,
-    improvement_surcharge,
-    total_amount,
-    payment_type,
-    trip_type,
-    congestion_surcharge
-) from stdin delimiter ',' csv;""")
-
-CREATE_SQL = SQL("""
-create table if not exists {} (
-    id bigserial primary key,
-    vendorid bigint,
-    lpep_pickup_datetime timestamp,
-    lpep_dropoff_datetime timestamp,
-    store_and_fwd_flag text,
-    ratecodeid bigint,
-    pulocationid bigint,
-    dolocationid bigint,
-    passenger_count bigint,
-    trip_distance double precision,
-    fare_amount double precision,
-    extra double precision,
-    mta_tax double precision,
-    tip_amount double precision,
-    tolls_amount double precision,
-    ehail_fee double precision,
-    improvement_surcharge double precision,
-    total_amount double precision,
-    payment_type bigint,
-    trip_type double precision,
-    congestion_surcharge double precision
-);""")
 
 
 if __name__ == "__main__":
@@ -127,24 +88,13 @@ if __name__ == "__main__":
         type=str,
         help="Database for PostgreSQL",
     )
-    parser.add_argument(
-        "--table",
-        default="green_data",
-        type=str,
-        help="Table for PostgreSQL",
-    )
-    parser.add_argument(
-        "--force",
-        action="store_true",
-        help="Force to overwrite the table",
-    )
 
     args = parser.parse_args()
 
     total = pl.scan_parquet(args.source_file).select(pl.len()).collect().item()
 
     temp = Path(mkdtemp())
-    csv_path = temp / (args.table + ".csv")
+    csv_path = temp / "green_tripdata.csv"
     print(f"generating csv file {csv_path}")
     pl.scan_parquet(
         args.source_file,
@@ -160,25 +110,19 @@ if __name__ == "__main__":
     with psycopg.connect(
         f"user={args.user} password={args.password} host={args.host} port={args.port} dbname={args.database}"
     ) as connection:
-        if args.force:
-            print("dropping table")
-            with connection.cursor() as cursor:
-                cursor.execute(
-                    SQL("drop table if exists {};").format(Identifier(args.table))
-                )
-
         print("creating table")
         with connection.cursor() as cursor:
-            cursor.execute(CREATE_SQL.format(Identifier(args.table)))
+            cursor.execute(CREATE_SQL)
             connection.commit()
 
         print("copying data")
         with connection.cursor() as cursor, open(csv_path, "r") as f:
+            reader = csv.reader(f)
             cursor.execute("set datestyle to ISO, DMY;")
 
-            with cursor.copy(COPY_SQL.format(Identifier(args.table))) as copy:
-                for line in tqdm(f, total=total, desc="copying data"):
-                    copy.write(line)
+            with cursor.copy(COPY_SQL) as copy:
+                for line in tqdm(reader, total=total, desc="copying data"):
+                    copy.write_row(line)
 
     print("done!")
     csv_path.unlink()

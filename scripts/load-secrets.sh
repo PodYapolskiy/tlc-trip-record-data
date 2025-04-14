@@ -33,5 +33,5 @@ log "POSTGRES_DATABASE=$POSTGRES_DATABASE"
 export TEAMNAME=$(cat "$PROJECT_ROOT/secrets/TEAMNAME")
 log "TEAMNAME=$TEAMNAME"
 
-export HDFS_ROOT="hdfs:///user/$TEAMNAME/"
+export HDFS_ROOT="hdfs:///user/$TEAMNAME"
 log "HDFS_ROOT=$HDFS_ROOT"
