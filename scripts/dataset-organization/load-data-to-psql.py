@@ -9,10 +9,9 @@
 # ///
 
 import argparse
-import csv
 from pathlib import Path
 from tempfile import mkdtemp
-from psycopg.sql import SQL, Identifier
+from psycopg.sql import SQL
 import polars as pl
 import psycopg
 from tqdm import tqdm
@@ -104,26 +103,30 @@ if __name__ == "__main__":
         include_header=False,
         include_bom=False,
         datetime_format="%Y-%m-%d %H:%M:%S",
+        separator="\t",
     )
 
-    print("connecting to postgres")
-    with psycopg.connect(
-        f"user={args.user} password={args.password} host={args.host} port={args.port} dbname={args.database}"
-    ) as connection:
-        print("creating table")
-        with connection.cursor() as cursor:
-            cursor.execute(CREATE_SQL)
-            connection.commit()
+    try:
+        print("connecting to postgres")
+        with psycopg.connect(
+            f"user={args.user} password={args.password} host={args.host} port={args.port} dbname={args.database}"
+        ) as connection:
+            print("creating table")
+            with connection.cursor() as cursor:
+                cursor.execute(CREATE_SQL)
+                connection.commit()
 
-        print("copying data")
-        with connection.cursor() as cursor, open(csv_path, "r") as f:
-            reader = csv.reader(f)
-            cursor.execute("set datestyle to ISO, DMY;")
+            print("copying data")
+            with connection.cursor() as cursor, open(csv_path, "r") as f:
+                cursor.execute("set datestyle to ISO, DMY;")
 
-            with cursor.copy(COPY_SQL) as copy:
-                for line in tqdm(reader, total=total, desc="copying data"):
-                    copy.write_row(line)
+                with cursor.copy(COPY_SQL) as copy:
+                    for line in tqdm(f, total=total, desc="copying data"):
+                        copy.write_row(line)
 
-    print("done!")
-    csv_path.unlink()
-    temp.rmdir()
+        print("done!")
+    except Exception as e:
+        print(e)
+    finally:
+        csv_path.unlink()
+        temp.rmdir()

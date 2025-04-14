@@ -65,7 +65,7 @@ log "Deleted $DATA"
 rm -rf "$DATA"
 
 log "Clearning directory $HDFS_ROOT/project/warehouse before loading data"
-hdfs dfs -rm -rf $HDFS_ROOT/project/warehouse
+hdfs dfs -rm -r -f $HDFS_ROOT/project/warehouse
 hdfs dfs -mkdir -p $HDFS_ROOT/project/warehouse
 
 log "Loading data from PostgreSQL to cluster using scoop"

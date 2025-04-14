@@ -19,4 +19,4 @@ copy green_tripdata (
     payment_type,
     trip_type,
     congestion_surcharge
-) from stdin delimiter ',' csv;
+) from stdin delimiter e'\t' csv;
