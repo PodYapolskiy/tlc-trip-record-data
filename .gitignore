@@ -1,4 +1,6 @@
 secrets
+.scala-build
+.metals
 
 # MacOS Specific
 **/.DS_Store
