@@ -47,3 +47,16 @@ else
     log "Removing $SCRIPTS/$UV_ARCHIVE"
     rm -r "$SCRIPTS/${UV_ARCHIVE%%.*}" "$SCRIPTS/$UV_ARCHIVE"
 fi
+
+if [ -f "$BIN/sbt" ]; then
+    log "File $BIN/sbt exists"
+else
+    log "downloading coursier to setup scala"
+    curl -fL https://github.com/coursier/coursier/releases/latest/download/cs-x86_64-pc-linux.gz | gzip -d > cs && chmod +x cs && ./cs setup -y
+    log "removing coursier"
+    rm cs
+    log "copying files to bin folder"
+    cp ~/.local/share/coursier/bin/* $BIN/
+fi
+
+log "loaded binaries: $(ls $BIN/)"
