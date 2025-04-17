@@ -43,10 +43,13 @@ $BIN/uv run "$SCRIPTS/dataset-organization/download-sources.py" \
     --output-dir "$DATA" \
     --max-concurrent 12
 
-log "Loading data to $HDFS_ROOT/project/rawdata"
+log "Setting up $HDFS_ROOT/project/"
 hdfs dfs -rm -r -f $HDFS_ROOT/project/rawdata
 hdfs dfs -mkdir -p $HDFS_ROOT/project/rawdata
+hdfs dfs -mkdir -p $HDFS_ROOT/project/merged
 hdfs dfs -put $DATA $HDFS_ROOT/project/rawdata
+hdfs dfs -rm -r -f $HDFS_ROOT/project/warehouse
+hdfs dfs -mkdir -p $HDFS_ROOT/project/warehous
 
 log "Creating tables in PostgreSQL"
 $BIN/uv run "$SCRIPTS/dataset-organization/create-tables.py" \
@@ -55,10 +58,6 @@ $BIN/uv run "$SCRIPTS/dataset-organization/create-tables.py" \
     --user $POSTGRES_USERNAME \
     --password $POSTGRES_PASSWORD \
     --database $POSTGRES_DATABASE
-
-log "Clearning directory $HDFS_ROOT/project/warehouse before loading data"
-hdfs dfs -rm -r -f $HDFS_ROOT/project/warehouse
-hdfs dfs -mkdir -p $HDFS_ROOT/project/warehous
 
 log "Building scala jar"
 ROLLBACK=$pwd
@@ -78,7 +77,7 @@ spark-submit \
     --password $POSTGRES_PASSWORD \
     --database $POSTGRES_DATABASE \
     --table green_tripdata \
-    --source "/user/$TEAMNAME/project/rawdata/data/*.parquet" \
+    --source "/user/$TEAMNAME/project/rawdata/data" \
     --merged "/user/$TEAMNAME/project/rawdata/merged"
 
 log "Loading data from PostgreSQL to cluster using scoop"

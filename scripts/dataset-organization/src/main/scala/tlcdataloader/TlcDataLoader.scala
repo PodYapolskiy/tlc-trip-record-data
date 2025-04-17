@@ -1,8 +1,12 @@
 package tlcdataloader
 
-import org.apache.spark.sql.{SparkSession, functions}
+import org.apache.spark.sql.{DataFrame, SparkSession, functions}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
+import scala.concurrent.{Await, Future, ExecutionContext}
+import scala.concurrent.duration._
+import org.apache.hadoop.fs.{FileSystem, Path, FileStatus}
+import scala.util.{Try, Success, Failure}
 
 object TlcDataLoader extends App {
   val argMap = parseArgs(args)
@@ -12,7 +16,7 @@ object TlcDataLoader extends App {
   val pgUser        = argMap.getOrElse("username", throw new IllegalArgumentException("--username is required"))
   val pgPassword    = argMap.getOrElse("password", throw new IllegalArgumentException("--password is required"))
   val pgDatabase    = argMap.getOrElse("database", throw new IllegalArgumentException("--database is required"))
-  val pgTable       = argMap.getOrElse("table", "green_tripdata")
+  val pgTable       = argMap.getOrElse("table", throw new IllegalArgumentException("--table is required"))
   val parquetSource = argMap.getOrElse("source", throw new IllegalArgumentException("--source is required"))
   val parquetMerged = argMap.getOrElse("merged", throw new IllegalArgumentException("--merged is required"))
 
@@ -21,41 +25,65 @@ object TlcDataLoader extends App {
     .appName("TLC Trip Record Data Loader")
     .getOrCreate()
 
-  val jdbcUrl = s"jdbc:postgresql://$pgHost:$pgPort/$pgDatabase"
+  import spark.implicits._
+  import scala.concurrent.ExecutionContext.Implicits.global
 
-  spark.read
-    .option("mergeSchema", "false")
-    .parquet(parquetSource)
-    .withColumn("VendorID", col("VendorID").cast(LongType))
-    .withColumn("lpep_pickup_datetime", col("lpep_pickup_datetime").cast(TimestampType))
-    .withColumn("lpep_dropoff_datetime", col("lpep_dropoff_datetime").cast(TimestampType))
-    .withColumn("store_and_fwd_flag", col("store_and_fwd_flag").cast(StringType))
-    .withColumn("RatecodeID", col("RatecodeID").cast(LongType))
-    .withColumn("PULocationID", col("PULocationID").cast(LongType))
-    .withColumn("DOLocationID", col("DOLocationID").cast(LongType))
-    .withColumn("passenger_count", col("passenger_count").cast(LongType))
-    .withColumn("trip_distance", col("trip_distance").cast(DoubleType))
-    .withColumn("fare_amount", col("fare_amount").cast(DoubleType))
-    .withColumn("extra", col("extra").cast(DoubleType))
-    .withColumn("mta_tax", col("mta_tax").cast(DoubleType))
-    .withColumn("tip_amount", col("tip_amount").cast(DoubleType))
-    .withColumn("tolls_amount", col("tolls_amount").cast(DoubleType))
-    .withColumn("ehail_fee", col("ehail_fee").cast(DoubleType))
-    .withColumn("improvement_surcharge", col("improvement_surcharge").cast(DoubleType))
-    .withColumn("total_amount", col("total_amount").cast(DoubleType))
-    .withColumn("payment_type", col("payment_type").cast(LongType))
-    .withColumn("trip_type", col("trip_type").cast(DoubleType))
-    .withColumn("congestion_surcharge", col("congestion_surcharge").cast(DoubleType))
-    .withColumn("filename", input_file_name())
-    .withColumn("date", regexp_extract(col("filename"), "green_tripdata_([\\d]{4}-[\\d]{2}).*\\.parquet", 1))
-    .withColumn("date", to_date(col("date"), "yyyy-MM"))
-    .withColumn("year", year(col("date")))
-    .withColumn("month", month(col("date")))
-    .drop("date")
-    .drop("filename")
-    .write
-    .mode("overwrite")
-    .parquet(parquetMerged)
+  val jdbcUrl    = s"jdbc:postgresql://$pgHost:$pgPort/$pgDatabase"
+  val hadoopConf = spark.sparkContext.hadoopConfiguration
+  val fs         = FileSystem.get(hadoopConf)
+
+  val sourcePath = new Path(parquetSource)
+  val parquetFiles = fs
+    .listStatus(sourcePath)
+    .filter(file => file.getPath.getName.matches("green_tripdata_\\d{4}-\\d{2}\\.parquet"))
+    .map(_.getPath.toString)
+    .toList
+
+  val processingTasks = parquetFiles.map { filePath =>
+    Future {
+      val fileName = new Path(filePath).getName
+      println(s"Processing file: $fileName")
+
+      val regex = "green_tripdata_(\\d{4})-(\\d{2})\\.parquet".r
+      val (year, month) = fileName match {
+        case regex(y, m) => (y.toInt, m.toInt)
+        case _           => throw new IllegalArgumentException(s"Invalid filename format: $fileName")
+      }
+
+      spark.read
+        .parquet(filePath)
+        .withColumn("VendorID", col("VendorID").cast(LongType))
+        .withColumn("lpep_pickup_datetime", col("lpep_pickup_datetime").cast(TimestampType))
+        .withColumn("lpep_dropoff_datetime", col("lpep_dropoff_datetime").cast(TimestampType))
+        .withColumn("store_and_fwd_flag", col("store_and_fwd_flag").cast(StringType))
+        .withColumn("RatecodeID", col("RatecodeID").cast(LongType))
+        .withColumn("PULocationID", col("PULocationID").cast(LongType))
+        .withColumn("DOLocationID", col("DOLocationID").cast(LongType))
+        .withColumn("passenger_count", col("passenger_count").cast(LongType))
+        .withColumn("trip_distance", col("trip_distance").cast(DoubleType))
+        .withColumn("fare_amount", col("fare_amount").cast(DoubleType))
+        .withColumn("extra", col("extra").cast(DoubleType))
+        .withColumn("mta_tax", col("mta_tax").cast(DoubleType))
+        .withColumn("tip_amount", col("tip_amount").cast(DoubleType))
+        .withColumn("tolls_amount", col("tolls_amount").cast(DoubleType))
+        .withColumn("ehail_fee", col("ehail_fee").cast(DoubleType))
+        .withColumn("improvement_surcharge", col("improvement_surcharge").cast(DoubleType))
+        .withColumn("total_amount", col("total_amount").cast(DoubleType))
+        .withColumn("payment_type", col("payment_type").cast(LongType))
+        .withColumn("trip_type", col("trip_type").cast(DoubleType))
+        .withColumn("congestion_surcharge", col("congestion_surcharge").cast(DoubleType))
+        .withColumn("year", lit(year))
+        .withColumn("month", lit(month))
+        .write
+        .mode("overwrite")
+        .parquet(s"$parquetMerged/year=$year/month=$month")
+
+      (year, month)
+    }
+  }
+
+  val results = Await.result(Future.sequence(processingTasks), 1.hour)
+  println(s"Processed ${results.size} files")
 
   spark.read
     .parquet(parquetMerged)
