@@ -15,9 +15,6 @@ import psycopg
 script_dir = Path(__file__).parent
 sql_dir = script_dir.parent.parent / "sql"
 
-with open(sql_dir / "create-table.sql") as f:
-    CREATE_SQL = SQL(f.read())
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Load data to PostgreSQL.")
@@ -57,8 +54,16 @@ if __name__ == "__main__":
         type=str,
         help="Database for PostgreSQL",
     )
+    parser.add_argument(
+        "--psql-create-schema",
+        default=str(sql_dir / "create-tables-psql.sql"),
+        type=str,
+    )
 
     args = parser.parse_args()
+
+    with open(args.psql_create_schema) as f:
+        CREATE_SQL = SQL(f.read())
 
     print("connecting to postgres")
     with psycopg.connect(

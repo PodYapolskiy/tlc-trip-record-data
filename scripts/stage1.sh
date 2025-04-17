@@ -49,7 +49,7 @@ hdfs dfs -mkdir -p $HDFS_ROOT/project/rawdata
 hdfs dfs -mkdir -p $HDFS_ROOT/project/merged
 hdfs dfs -put $DATA $HDFS_ROOT/project/rawdata
 hdfs dfs -rm -r -f $HDFS_ROOT/project/warehouse
-hdfs dfs -mkdir -p $HDFS_ROOT/project/warehous
+hdfs dfs -mkdir -p $HDFS_ROOT/project/warehouse
 
 log "Creating tables in PostgreSQL"
 $BIN/uv run "$SCRIPTS/dataset-organization/create-tables.py" \
@@ -57,7 +57,8 @@ $BIN/uv run "$SCRIPTS/dataset-organization/create-tables.py" \
     --port $POSTGRES_PORT \
     --user $POSTGRES_USERNAME \
     --password $POSTGRES_PASSWORD \
-    --database $POSTGRES_DATABASE
+    --database $POSTGRES_DATABASE \
+    --psql-create-schema $PROJECT_ROOT/sql/create-table-psql.sql
 
 log "Building scala jar"
 ROLLBACK=$pwd
@@ -78,14 +79,14 @@ spark-submit \
     --database $POSTGRES_DATABASE \
     --table green_tripdata \
     --source "/user/$TEAMNAME/project/rawdata/data" \
-    --merged "/user/$TEAMNAME/project/rawdata/merged"
+    --merged "/user/$TEAMNAME/project/data"
 
 log "Loading data from PostgreSQL to cluster using scoop"
 sqoop import-all-tables \
-    --connect jdbc:postgresql:/$POSTGRES_HOST:$POSTGRES_PORT/$POSTGRES_DATABASE \
+    --connect jdbc:postgresql://$POSTGRES_HOST:$POSTGRES_PORT/$POSTGRES_DATABASE \
     --username $POSTGRES_USERNAME \
     --password $POSTGRES_PASSWORD \
-    --compression-codec=zstd \
+    --compression-codec=snappy \
     --compress \
-    --warehouse-dir=project/warehouse \
+    --warehouse-dir=$HDFS_ROOT/project/warehouse \
     --m 1
