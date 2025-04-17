@@ -47,7 +47,6 @@ log "Loading data to $HDFS_ROOT/project/rawdata"
 hdfs dfs -rm -r -f $HDFS_ROOT/project/rawdata
 hdfs dfs -mkdir -p $HDFS_ROOT/project/rawdata
 hdfs dfs -put $DATA $HDFS_ROOT/project/rawdata
-export PARQUET_SOURCE="/user/$TEAMNAME/project/rawdata/*.parquet"
 
 log "Creating tables in PostgreSQL"
 $BIN/uv run "$SCRIPTS/dataset-organization/create-tables.py" \
@@ -64,25 +63,29 @@ hdfs dfs -mkdir -p $HDFS_ROOT/project/warehous
 log "Building scala jar"
 ROLLBACK=$pwd
 cd $SCRIPTS/dataset-organization
-$BIN/sbt assembly
-cp $SCRIPTS/dataset-organization/target/scala-2.12/tlddataloader-1.0.0.jar $SCRIPTS/dataset-organization/tlddataloader.jar
+$BIN/sbt clean assembly
 cd $ROLLBACK
 
 log "Loading data into Postgres using spark"
-spark-submit --class TripDataLoader $SCRIPTS/dataset-organization/tlddataloader.jar \
-    --conf "spark.executorEnv.POSTGRES_HOST=$POSTGRES_HOST" \
-    --conf "spark.executorEnv.POSTGRES_PORT=$POSTGRES_PORT" \
-    --conf "spark.executorEnv.POSTGRES_USERNAME=$POSTGRES_USERNAME" \
-    --conf "spark.executorEnv.POSTGRES_PASSWORD=$POSTGRES_PASSWORD" \
-    --conf "spark.executorEnv.POSTGRES_DATABASE=$POSTGRES_DATABASE" \
-    --conf "spark.executorEnv.PARQUET_SOURCE=$PARQUET_SOURCE"
+spark-submit \
+    --master yarn \
+    --deploy-mode cluster \
+    --class tlcdataloader.TlcDataLoader \
+    $SCRIPTS/dataset-organization/target/scala-2.12/load-data-assembly-0.1.0.jar \
+    --host $POSTGRES_HOST \
+    --port $POSTGRES_PORT \
+    --username $POSTGRES_USERNAME \
+    --password $POSTGRES_PASSWORD \
+    --database $POSTGRES_DATABASE \
+    --table green_tripdata \
+    --parquet-source "/user/$TEAMNAME/project/rawdata/*.parquet"
 
-# log "Loading data from PostgreSQL to cluster using scoop"
-# sqoop import-all-tables \
-#     --connect jdbc:postgresql:/$POSTGRES_HOST:$POSTGRES_PORT/$POSTGRES_DATABASE \
-#     --username $POSTGRES_USERNAME \
-#     --password $POSTGRES_PASSWORD \
-#     --compression-codec=zstd \
-#     --compress \
-#     --warehouse-dir=project/warehouse \
-#     --m 1
+log "Loading data from PostgreSQL to cluster using scoop"
+sqoop import-all-tables \
+    --connect jdbc:postgresql:/$POSTGRES_HOST:$POSTGRES_PORT/$POSTGRES_DATABASE \
+    --username $POSTGRES_USERNAME \
+    --password $POSTGRES_PASSWORD \
+    --compression-codec=zstd \
+    --compress \
+    --warehouse-dir=project/warehouse \
+    --m 1
