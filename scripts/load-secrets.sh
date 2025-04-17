@@ -7,8 +7,6 @@ log() {
     echo -e "${GREEN}$1${NC}"
 }
 
-
-
 log "loading env variables"
 
 export SCRIPTS="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -42,22 +40,22 @@ if [ $missing -eq 1 ]; then
 fi
 
 export POSTGRES_USERNAME=$(cat "$PROJECT_ROOT/secrets/POSTGRES_USERNAME")
-log "POSTGRES_USERNAME=$POSTGRES_USERNAME"
+log "POSTGRES_USERNAME is loaded"
 
 export POSTGRES_PASSWORD=$(cat "$PROJECT_ROOT/secrets/POSTGRES_PASSWORD")
-log "POSTGRES_PASSWORD=$POSTGRES_PASSWORD"
+log "POSTGRES_PASSWORD is loaded"
 
 export POSTGRES_HOST=$(cat "$PROJECT_ROOT/secrets/POSTGRES_HOST")
-log "POSTGRES_HOST=$POSTGRES_HOST"
+log "POSTGRES_HOST is loaded"
 
 export POSTGRES_PORT=$(cat "$PROJECT_ROOT/secrets/POSTGRES_PORT")
-log "POSTGRES_PORT=$POSTGRES_PORT"
+log "POSTGRES_PORT is loaded"
 
 export POSTGRES_DATABASE=$(cat "$PROJECT_ROOT/secrets/POSTGRES_DATABASE")
-log "POSTGRES_DATABASE=$POSTGRES_DATABASE"
+log "POSTGRES_DATABASE is loaded"
 
 export TEAMNAME=$(cat "$PROJECT_ROOT/secrets/TEAMNAME")
-log "TEAMNAME=$TEAMNAME"
+log "TEAMNAME is loaded"
 
 export HDFS_ROOT="hdfs:///user/$TEAMNAME"
-log "HDFS_ROOT=$HDFS_ROOT"
+log "HDFS_ROOT is loaded"

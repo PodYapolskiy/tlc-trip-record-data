@@ -6,13 +6,31 @@ import org.apache.spark.sql.functions._
 object TlcDataLoader extends App {
   val argMap = parseArgs(args)
 
-  val pgHost = argMap.getOrElse("host", throw new IllegalArgumentException("--host is required"))
-   val pgPort = argMap.getOrElse("port", throw new IllegalArgumentException("--port is required"))
-   val pgUser = argMap.getOrElse("username", throw new IllegalArgumentException("--username is required"))
-   val pgPassword = argMap.getOrElse("password", throw new IllegalArgumentException("--password is required"))
-   val pgDatabase = argMap.getOrElse("database", throw new IllegalArgumentException("--database is required"))
-   val pgTable = argMap.getOrElse("table", "green_tripdata")
-   val parquetSource = argMap.getOrElse("source", throw new IllegalArgumentException("--source is required"))
+  val pgHost = argMap.getOrElse(
+    "host",
+    throw new IllegalArgumentException("--host is required")
+  )
+  val pgPort = argMap.getOrElse(
+    "port",
+    throw new IllegalArgumentException("--port is required")
+  )
+  val pgUser = argMap.getOrElse(
+    "username",
+    throw new IllegalArgumentException("--username is required")
+  )
+  val pgPassword = argMap.getOrElse(
+    "password",
+    throw new IllegalArgumentException("--password is required")
+  )
+  val pgDatabase = argMap.getOrElse(
+    "database",
+    throw new IllegalArgumentException("--database is required")
+  )
+  val pgTable = argMap.getOrElse("table", "green_tripdata")
+  val parquetSource = argMap.getOrElse(
+    "source",
+    throw new IllegalArgumentException("--source is required")
+  )
 
   val spark = SparkSession
     .builder()
@@ -28,6 +46,7 @@ object TlcDataLoader extends App {
   val jdbcUrl = s"jdbc:postgresql://$pgHost:$pgPort/$pgDatabase"
 
   spark.read
+    .option("mergeSchema", "true")
     .parquet(parquetSource)
     .withColumn("filename", input_file_name())
     .withColumn(
@@ -58,18 +77,21 @@ object TlcDataLoader extends App {
   spark.stop()
 
   def parseArgs(args: Array[String]): Map[String, String] = {
-      val argList = args.toList
+    val argList = args.toList
 
-      def nextArg(list: List[String], map: Map[String, String]): Map[String, String] = {
-        list match {
-          case Nil => map
-          case arg :: value :: rest if arg.startsWith("--") =>
-            val key = arg.substring(2)
-            nextArg(rest, map + (key -> value))
-          case _ :: rest => nextArg(rest, map)
-        }
+    def nextArg(
+        list: List[String],
+        map: Map[String, String]
+    ): Map[String, String] = {
+      list match {
+        case Nil => map
+        case arg :: value :: rest if arg.startsWith("--") =>
+          val key = arg.substring(2)
+          nextArg(rest, map + (key -> value))
+        case _ :: rest => nextArg(rest, map)
       }
-
-      nextArg(argList, Map())
     }
+
+    nextArg(argList, Map())
+  }
 }

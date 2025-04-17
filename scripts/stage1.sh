@@ -78,7 +78,7 @@ spark-submit \
     --password $POSTGRES_PASSWORD \
     --database $POSTGRES_DATABASE \
     --table green_tripdata \
-    --source "/user/$TEAMNAME/project/rawdata/*.parquet"
+    --source "/user/$TEAMNAME/project/rawdata/data/*.parquet"
 
 log "Loading data from PostgreSQL to cluster using scoop"
 sqoop import-all-tables \
