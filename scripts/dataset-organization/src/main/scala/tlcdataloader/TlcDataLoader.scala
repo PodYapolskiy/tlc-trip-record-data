@@ -14,6 +14,7 @@ object TlcDataLoader extends App {
   val pgDatabase    = argMap.getOrElse("database", throw new IllegalArgumentException("--database is required"))
   val pgTable       = argMap.getOrElse("table", "green_tripdata")
   val parquetSource = argMap.getOrElse("source", throw new IllegalArgumentException("--source is required"))
+  val parquetMerged = argMap.getOrElse("merged", throw new IllegalArgumentException("--merged is required"))
 
   val spark = SparkSession
     .builder()
@@ -52,8 +53,15 @@ object TlcDataLoader extends App {
     .withColumn("month", month(col("date")))
     .drop("date")
     .drop("filename")
+    .write
+    .mode("overwrite")
+    .parquet(parquetMerged)
+
+  spark.read
+    .parquet(parquetMerged)
     .repartition(col("year"), col("month"))
     .write
+    .mode("overwrite")
     .format("jdbc")
     .option("url", jdbcUrl)
     .option("dbtable", pgTable)
@@ -61,7 +69,6 @@ object TlcDataLoader extends App {
     .option("password", pgPassword)
     .option("driver", "org.postgresql.Driver")
     .option("batchsize", 5000)
-    .mode("overwrite")
     .save()
 
   spark.stop()
