@@ -2,6 +2,7 @@ package tlcdataloader
 
 import org.apache.spark.sql.{SparkSession, functions}
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.types._
 
 object TlcDataLoader extends App {
   val argMap = parseArgs(args)
@@ -37,6 +38,33 @@ object TlcDataLoader extends App {
     .appName("TLC Trip Record Data Loader")
     .getOrCreate()
 
+  val schema = StructType(
+    Array(
+      StructField("VendorID", LongType, true),
+      StructField("lpep_pickup_datetime", TimestampType, true),
+      StructField("lpep_dropoff_datetime", TimestampType, true),
+      StructField("store_and_fwd_flag", StringType, true),
+      StructField("RatecodeID", LongType, true),
+      StructField("PULocationID", LongType, true),
+      StructField("DOLocationID", LongType, true),
+      StructField("passenger_count", LongType, true),
+      StructField("trip_distance", DoubleType, true),
+      StructField("fare_amount", DoubleType, true),
+      StructField("extra", DoubleType, true),
+      StructField("mta_tax", DoubleType, true),
+      StructField("tip_amount", DoubleType, true),
+      StructField("tolls_amount", DoubleType, true),
+      StructField("ehail_fee", DoubleType, true),
+      StructField("improvement_surcharge", DoubleType, true),
+      StructField("total_amount", DoubleType, true),
+      StructField("payment_type", LongType, true),
+      StructField("trip_type", DoubleType, true),
+      StructField("congestion_surcharge", DoubleType, true),
+      StructField("year", LongType, true),
+      StructField("month", LongType, true)
+    )
+  )
+
   spark.conf.set("spark.sql.parquet.mergeSchema", "true")
   spark.conf.set(
     "spark.sql.parquet.schemaVerticalMergeMode",
@@ -46,7 +74,8 @@ object TlcDataLoader extends App {
   val jdbcUrl = s"jdbc:postgresql://$pgHost:$pgPort/$pgDatabase"
 
   spark.read
-    .option("mergeSchema", "true")
+    .option("mergeSchema", "false")
+    .schema(schema)
     .parquet(parquetSource)
     .withColumn("filename", input_file_name())
     .withColumn(

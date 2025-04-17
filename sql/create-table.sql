@@ -20,5 +20,7 @@ create table green_tripdata (
     total_amount double precision,
     payment_type bigint,
     trip_type double precision,
-    congestion_surcharge double precision
+    congestion_surcharge double precision,
+    year int,
+    month int
 );
