@@ -17,13 +17,7 @@ sql_dir = script_dir.parent.parent / "sql"
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Load data to PostgreSQL.")
-    parser.add_argument(
-        "--source-file",
-        default="green_data.parquet",
-        type=str,
-        help="Source file path",
-    )
+    parser = argparse.ArgumentParser(description="Create tables in PostgreSQL.")
     parser.add_argument(
         "--host",
         default="localhost",
