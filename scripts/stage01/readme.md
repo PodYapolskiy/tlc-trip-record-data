@@ -9,6 +9,7 @@
   - [Merge Script](#merge-script)
   - [Create tables](#create-tables)
   - [Dataloader](#dataloader)
+  - [DEMO](#demo)
 
 This stage is responsible for collecting data from the source, transforming data into a single format, and injecting it into the database.
 
@@ -438,3 +439,59 @@ spark-submit \
 ```
 
 You can read technical details of the script in the [dataloader/readme.md](dataloader/readme.md) file.
+
+## DEMO
+
+
+![stage1-1.png](../../.github/assets/stage1-1.png)
+> **Figure 1**
+> 
+> Deploy process and stage1 script launch. On the screenshot, we can see that scripts loads secrets from the `secrets/` directory and invokes `prepare-bin.sh` script, which downloads all the required binaries and saves them in the `$SCRIPTS/bin/` directory.
+
+
+![stage1-2.png](../../.github/assets/stage1-2.png)
+> **Figure 2**
+>
+> Download script exectution. On the screenshot, we can see that the script downloads all the files from the source and saves them in the `$PROJECT_ROOT/data/` directory.
+
+![stage1-3.png](../../.github/assets/stage1-3.png)
+> **Figure 3**
+>
+> Table creation, scala jar built and spark-submit execution. On the screenshot, we can see that the script invokes `create-tables.py` script, which creates tables in the PostgreSQL database. Script also builds `dataloadeer` scala project and invokes `spark-submit` to load the data into PostgreSQL
+
+![stage1-4.png](../../.github/assets/stage1-4.png)
+> **Figure 4**
+>
+> Dataloader spawns a lot of parallel jobs to process files in the most efficient way.
+
+![stage1-5.png](../../.github/assets/stage1-5.png)
+> **Figure 5**
+>
+> After processing file, dataloader starts to load data to the PostgreSQL database. This is the most time consuming part of the script.
+
+![stage1-6.png](../../.github/assets/stage1-6.png)
+> **Figure 6**
+>
+> But even though, thanks to the spark architecture, even such time consuming operation can be splited into smaller jobs 
+
+![stage1-7.png](../../.github/assets/stage1-7.png)
+> **Figure 7**
+>
+> Spark successfully loads data into the database, `sqoop` starts to import data from PostgreSQL to HDFS
+
+![stage1-8.png](../../.github/assets/stage1-8.png)
+> **Figure 8**
+>
+> All the rows are successfully loaded into Postgres
+
+![stage1-8.png](../../.github/assets/stage1-9.png)
+> **Figure 9**
+>
+> Sqoop successfully finished
+
+![stage1-8.png](../../.github/assets/stage1-10.png)
+> **Figure 10**
+>
+> Sqoop successfully imports data from Postgres to HDFS
+
+
