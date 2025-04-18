@@ -30,7 +30,7 @@ Using `uv` also comes with a advantage of being able to specify script dependenc
   -  [`templates/`](index/templates/) - [Jinja2](https://jinja.palletsprojects.com) template files for generating report
         -  [`template.html`](index/templates/template.html) - html 
         -  [`template.md`](index/templates/template.md) - markdown
-        -  [`template.typst`](index/templates/template.typst) - [typst](https://typst.app/)
+        -  [`template.typ`](index/templates/template.typ) - [typst](https://typst.app/)
   - [`index.py`](index/index.py) - script for generating report
   - [`readme.md`](index/readme.md) - script technical description
 - [`merge/`](merge/)
