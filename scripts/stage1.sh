@@ -82,11 +82,13 @@ spark-submit \
     --merged "/user/$TEAMNAME/project/data"
 
 log "Loading data from PostgreSQL to cluster using scoop"
-sqoop import-all-tables \
+sqoop import \
     --connect jdbc:postgresql://$POSTGRES_HOST:$POSTGRES_PORT/$POSTGRES_DATABASE \
     --username $POSTGRES_USERNAME \
     --password $POSTGRES_PASSWORD \
+    --table green_tripdata \
     --compression-codec=snappy \
     --compress \
     --warehouse-dir=$HDFS_ROOT/project/warehouse \
-    --m 1
+    --split-by year \
+    -m 10
