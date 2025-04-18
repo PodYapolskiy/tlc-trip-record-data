@@ -1,3 +1,12 @@
+.bsp
+.bloop
+.metals
+.ruff_cache
+.venv
+.vscode
+.fleet
+
+
 data
 index.html
 index.md

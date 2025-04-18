@@ -1,3 +1,16 @@
+# TLC Trip Record Data
+
+## Deploy Process
+
+1. Copy your public ssh key to the server
+2. Run `just deploy team18@10.100.30.57:~/project`
+3. Login to the server using `ssh team18@10.100.30.57`
+4. Copy the secrets: `cp secrets.zip project/`
+5. Unzip the secrets: `cd project && unzip secrets.zip`
+6. Run stage1: `bash scripts/stage1.sh
+
+
+---- 
 This repository is a template for the final project of big data course. It contains the following directories:
 
 - `data/` contains the dataset files.

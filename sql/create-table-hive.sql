@@ -1,0 +1,26 @@
+drop table if exists green_tripdata;
+create table green_tripdata (
+    id bigserial primary key,
+    vendorid bigint,
+    lpep_pickup_datetime timestamp,
+    lpep_dropoff_datetime timestamp,
+    store_and_fwd_flag text,
+    ratecodeid bigint,
+    pulocationid bigint,
+    dolocationid bigint,
+    passenger_count bigint,
+    trip_distance double precision,
+    fare_amount double precision,
+    extra double precision,
+    mta_tax double precision,
+    tip_amount double precision,
+    tolls_amount double precision,
+    ehail_fee double precision,
+    improvement_surcharge double precision,
+    total_amount double precision,
+    payment_type bigint,
+    trip_type bigint,
+    congestion_surcharge double precision,
+    year int,
+    month int
+) using hive;

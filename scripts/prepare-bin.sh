@@ -28,7 +28,7 @@ fi
 if [ -f "$BIN/uv" ]; then
     log "File $BIN/uv already exists"
 else
-    UV_ARCHIVE="uv-i686-unknown-linux-gnu.tar.gz"
+    UV_ARCHIVE="uv-x86_64-unknown-linux-gnu.tar.gz"
     # UV_ARCHIVE="uv-aarch64-apple-darwin.tar.gz" # for ARM Mac
 
     if [ -d "$SCRIPTS/$UV_ARCHIVE" ]; then
@@ -48,11 +48,15 @@ else
     rm -r "$SCRIPTS/${UV_ARCHIVE%%.*}" "$SCRIPTS/$UV_ARCHIVE"
 fi
 
-log "Loading environment variables"
+if [ -f "$BIN/sbt" ]; then
+    log "File $BIN/sbt exists"
+else
+    log "downloading coursier to setup scala"
+    curl -fL https://github.com/coursier/coursier/releases/latest/download/cs-x86_64-pc-linux.gz | gzip -d > cs && chmod +x cs && ./cs setup -y
+    log "removing coursier"
+    rm cs
+    log "copying files to bin folder"
+    cp ~/.local/share/coursier/bin/* $BIN/
+fi
 
-export -x POSTGRES_USERNAME=$(cat "$PROJECT_ROOT/secrets/POSTGRES_USERNAME")
-export -x POSTGRES_PASSWORD=$(cat "$PROJECT_ROOT/secrets/POSTGRES_PASSWORD")
-export -x POSTGRES_HOST=$(cat "$PROJECT_ROOT/secrets/POSTGRES_HOST")
-export -x POSTGRES_PORT=$(cat "$PROJECT_ROOT/secrets/POSTGRES_PORT")
-export -x POSTGRES_DATABASE=$(cat "$PROJECT_ROOT/secrets/POSTGRES_DATABASE")
-export -x TEAMNAME=$(cat "$PROJECT_ROOT/secrets/TEAMNAME")
+log "loaded binaries: $(ls $BIN/)"

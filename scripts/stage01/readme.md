@@ -1,26 +1,85 @@
-# Dataset Organization
+# `[stage01]`
 
-This directory contains scripts to organize work with dataset.
+- [`[stage01]`](#stage01)
+  - [Development Process](#development-process)
+  - [File Structure](#file-structure)
+  - [Download dataset](#download-dataset)
+  - [Download Script](#download-script)
+  - [Index Script](#index-script)
+  - [Merge Script](#merge-script)
+  - [Create tables](#create-tables)
+  - [Dataloader](#dataloader)
+  - [DEMO](#demo)
 
-## Requirements
+This stage is responsible for collecting data from the source, transforming data into a single format, and injecting it into the database.
 
-- [uv](https://github.com/astral-sh/uv) installed
+## Development Process
+For easier development and deployment process, this project uses [uv](https://github.com/astral-sh/uv) tool for Python scripts and [sbt](https://www.scala-sbt.org/) with [assembly plugin](https://github.com/sbt/sbt-assembly) for Scala scripts. Make sure you have installed these tools before continuing development process.
+Using `uv` also comes with a advantage of being able to specify script dependencies in the script itself, and exeucuting `uv run script.py` will automatically download all the dependencies and execute the script in the virtual environment.
 
-## Prerequisites
+## File Structure
 
-Execute the following commands to install dependencies:
+
+- `readme.md` - you are here right now
+- [`pyproject.toml`](pyproject.toml) - project configuration file
+- [`uv.lcok`](uv.lock) - lock file for project dependencies
+- [`download/`](download/)
+  - [`download-sources.py`](download/download-sources.py) - script for downloading dataset files
+  -  [`readme.md`](download/readme.md) - script technical description
+- [`index/`](index/)
+  -  [`templates/`](index/templates/) - [Jinja2](https://jinja.palletsprojects.com) template files for generating report
+        -  [`template.html`](index/templates/template.html) - html 
+        -  [`template.md`](index/templates/template.md) - markdown
+        -  [`template.typst`](index/templates/template.typst) - [typst](https://typst.app/)
+  - [`index.py`](index/index.py) - script for generating report
+  - [`readme.md`](index/readme.md) - script technical description
+- [`merge/`](merge/)
+  - [`merge-parquets.py`](merge/merge-parquets.py) - script for merging dataset files on single machine using polars
+  - [`readme.md`](merge/readme.md) - script technical description
+- [`dataloader/`](dataloader/) - scala project with spark application for performing distributed data loading
+  - [`build.sbt`](dataloader/build.sbt) - sbt build file
+  - [`readme.md`](dataloader/readme.md) - project technical description
+
+## Download dataset
+
+We have manually downloaded all the dataset files from the source and have putted them in the Yandex Cloud Object Storage. Yandex Cloud object is configured that way, so it's content publicly available for download, however manipulation actions are limited to our team members. We have also setup a website for hosting generated index of the dataset, which is available at the following URLs:
+1. [bigdata.inno.dartt0n.ru](https://bigdata.inno.dartt0n.ru)
+2. [dartt0n.website.yandexcloud.net](https://dartt0n.website.yandexcloud.net/ibd/index.html)
+
+For downloading the dataset files, you can use the following URL:
+- https://storage.yandexcloud.net/dartt0n/ibd/green_tripdata_{year}-{month}.parquet
+
+where:
+- `{year}` - year of the dataset file in YYYY format
+- `{month}` - month of the dataset file in MM format
+
+For example, to download the dataset file for march 2024, you can use the following URL:
+- [https://storage.yandexcloud.net/dartt0n/ibd/green_tripdata_2024-03.parquet](https://storage.yandexcloud.net/dartt0n/ibd/green_tripdata_2024-03.parquet)
+
+## Download Script
+
+However, since 10 years of monthly data is exactly 120 files, downloading them manually is not a good idea. Therefore, we have created a script, which downloads all files from the bucket (by specifying range of years and months) and stores them in the local file system for further processing.
+
+This script is available in the [download/download-sources.py](download/download-sources.py) file.
+
+This script has the following arguments:
+- `--base-url` - base URL for downloading files
+- `--max-concurrent` - maximum number of concurrent downloads
+- `--start-year` - start year for data download
+- `--end-year` - end year for data download (inclusive)
+- `--start-month` - start month for data download
+- `--end-month` - end month for data download (inclusive)
+- `--file-prefix` - prefix for downloaded files
+- `--file-extension` - file extension for downloaded files
+- `--output-dir` - directory to save downloaded files
+
+You can access the help message for the script by running the following command:
 ```bash
-uv sync
-```
+$ uv run download/download-sources.py --help
 
-## Download dataset files
-
-You can use `download-sources.py` script to download dataset files.
-
-### Usage
-```bash
-usage: download-sources.py [-h] [--base-url BASE_URL] [--max-concurrent MAX_CONCURRENT] [--start-year START_YEAR] [--end-year END_YEAR] [--start-month START_MONTH] [--end-month END_MONTH]
-                           [--file-prefix FILE_PREFIX] [--file-extension FILE_EXTENSION] [--output-dir OUTPUT_DIR]
+usage: download-sources.py [-h] [--base-url BASE_URL] [--max-concurrent MAX_CONCURRENT] [--start-year START_YEAR] [--end-year END_YEAR]
+                           [--start-month START_MONTH] [--end-month END_MONTH] [--file-prefix FILE_PREFIX] [--file-extension FILE_EXTENSION]
+                           [--output-dir OUTPUT_DIR]
 
 Download NYC taxi trip data.
 
@@ -44,65 +103,41 @@ options:
                         Directory to save downloaded files
 ```
 
-### Example
-
-The following command will download files from December 2022 to January 2024 inclusive, with a maximum of 10 concurrent downloads. It will save the files in the `./data` directory. Format of the files is `{file_prefix}_{year}-{month}.{file_extension}`.
-
+Example of the running the script would be:
 ```bash
 uv run download-sources.py \
-    --base-url https://d37ci6vzurychx.cloudfront.net/trip-data/ \
+    --base-url https://storage.yandexcloud.net/dartt0n/ibd/ \
     --start-year 2014 \
     --end-year 2024 \
     --start-month 1 \
     --end-month 12 \
     --file-prefix green_tripdata \
     --file-extension parquet \
-    --output-dir ./data \
-    --max-concurrent 12
+    --output-dir ./data
 ```
+This example downloads all the files from January 2014 to December 2024 from the bucket and saves them in the `./data` directory.
 
-## Merge parquet files
+You can read technical details of the script in the [download/readme.md](download/readme.md) file.
 
-This script will merge parquet files into a single file.
+## Index Script
 
-### Usage
+After downloading the dataset files, we have created an index of the dataset. This index is available at the following URL:
+- [https://bigdata.inno.dartt0n.ru/ibd/index.html](https://bigdata.inno.dartt0n.ru/ibd/index.html)
+
+The indexing script also reads number of rows in the each parquet file using `pyarrow` and calculates the total number of rows in the dataset.
+
+The script also support generating index in the [typst](https://typst.app/) and markdown formats.
+
+The index scripts has the following arguments:
+- `--source-dir` - source directory for dataset files
+- `--output-format` - output format for the index, can be `html`, `markdown` or `typst`
+- `--output-file` - output file path
+- `--summary` - whether to include summary row with totals
+- `--replace-root` - replace root for download links
+
+You can access the help message for the script by running the following command:
 ```bash
-usage: merge-parquets.py [-h] [--source-dir SOURCE_DIR] [--output-file OUTPUT_FILE] [--prefix PREFIX] [--file-extension FILE_EXTENSION]
-                         [--compression {lz4,uncompressed,snappy,gzip,lzo,brotli,zstd}] [--compression-level COMPRESSION_LEVEL]
-
-Generate report from parquet files.
-
-options:
-  -h, --help            show this help message and exit
-  --source-dir SOURCE_DIR
-                        Directory containing parquet files
-  --output-file OUTPUT_FILE
-                        Output file path
-  --prefix PREFIX       Prefix for downloaded files
-  --file-extension FILE_EXTENSION
-                        File extension for downloaded files
-  --compression {lz4,uncompressed,snappy,gzip,lzo,brotli,zstd}
-                        Compression type for output parquet file
-  --compression-level COMPRESSION_LEVEL
-                        Compression level. Only available for gzip, brotli, and zstd
-```
-
-### Example
-```bash
-uv run merge-parquets.py \
-    --source-dir $PROJECT/data \
-    --output-file $PROJECT/data/green_data.parquet \
-    --prefix "green_tripdata_" \
-    --file-extension ".parquet"
-```
-
-## Generate report of downloaded files
-
-This script will generate a report in HTML, Markdown or Typst format and save it to a specified file. Optionally, you can include a summary row with totals.
-
-### Usage
-```bash
-usage: generate-index.py [-h] [--source-dir SOURCE_DIR] [--output-format {html,markdown,typst}] [--output-file OUTPUT_FILE] [--summary] [--replace-root REPLACE_ROOT]
+$ uv run index/generate-index.py --help
 
 Generate report from parquet files.
 
@@ -116,28 +151,23 @@ options:
                         Output file path
   --summary             Include summary row with totals
   --replace-root REPLACE_ROOT
-                        Replace the root path with this custom base (e.g. URL)
 ```
 
-### Example
-
-The following command will generate a index file in Markdown format and save it to `./index.md` with a summary row. Additionally, it will replace the root of the links to `https://dartt0n.website.yandexcloud.net/ibd`
-
+Example of the running the script would be:
 ```bash
-uv run generate-index.py \
-    --output-format markdown \
-    --output-file index.md \
-    --replace-root https://dartt0n.website.yandexcloud.net/ibd \
-    --summary
+uv run index/generate-index.py \
+    --source-dir data \
+    --output-format html \
+    --output-file index.html \
+    --summary \
+    --replace-root https://bigdata.inno.dartt0n.ru/ibd/
 ```
 
-### Artifacts
+You can read technical details of the script in the [index/readme.md](index/readme.md) file.
 
-#### HTML
-The generated `index.html` file is hosted here: [data files index](https://dartt0n.website.yandexcloud.net/ibd)
+<details>
+<summary>Click here to see example of generated index in markdown format</summary>
 
-#### Markdown
-The following table is generated by this script:
 
 | year      | month | size (mb)  | rows         | file                                                                                                         |
 | --------- | ----- | ---------- | ------------ | ------------------------------------------------------------------------------------------------------------ |
@@ -275,3 +305,193 @@ The following table is generated by this script:
 | 2024      | 12    | 1.3        | 53994        | [green_tripdata_2024-12.parquet](https://dartt0n.website.yandexcloud.net/ibd/green_tripdata_2024-12.parquet) |
 |           |       |            |              |                                                                                                              |
 | **total** |       | **1253.6** | **83484688** |                                                                                                              |
+
+</details>
+
+## Merge Script
+
+After downloading the dataset files, we have created a script, which merges all the files into a single parquet file. This script is based upon the [polars](https://www.pola.rs/) library and more specifically on the lazyframe streaming API. This API allows to process the data in a streaming manner, processing chunk by chunk keeping the memory usage low. However, this approach has a major drawback, that the code could be executed only on a single node and therefore limited by computational resources of a single machine.
+
+Merge script has the following arguments:
+- `--source-dir` - source directory for dataset files
+- `--output-file` - output file path
+- `--prefix` - prefix for downloaded files
+- `--file-extension` - file extension for downloaded files
+- `--compression` - compression type for output parquet file (lz4, uncompressed, snappy, gzip, lzo, brotli, zstd)
+- `--compression-level` - compression level. Only available for gzip, brotli, and zstd
+
+
+You can access the help message for the script by running the following command:
+```bash
+$ uv run merge/merge-parquets.py --help
+
+                         [--compression {lz4,uncompressed,snappy,gzip,lzo,brotli,zstd}] [--compression-level COMPRESSION_LEVEL]
+
+Generate report from parquet files.
+
+options:
+  -h, --help            show this help message and exit
+  --source-dir SOURCE_DIR
+                        Directory containing parquet files
+  --output-file OUTPUT_FILE
+                        Output file path
+  --prefix PREFIX       Prefix for downloaded files
+  --file-extension FILE_EXTENSION
+                        File extension for downloaded files
+  --compression {lz4,uncompressed,snappy,gzip,lzo,brotli,zstd}
+                        Compression type for output parquet file
+  --compression-level COMPRESSION_LEVEL
+                        Compression level. Only available for gzip, brotli, and zstd
+```
+
+Example of the running the script would be:
+```bash
+uv run merge/merge-parquets.py \
+    --source-dir data \
+    --output-file merged.parquet \
+    --prefix green_tripdata \
+    --file-extension parquet \
+    --compression zstd \
+    --compression-level 22
+```
+
+Ypu can read technical details of the script in the [merge/readme.md](merge/readme.md) file.
+
+
+
+## Create tables
+
+After merging the dataset files, we have created a script, which creates tables in the PostgreSQL database. This script has the following arguments:
+- `--host` - host for PostgreSQL
+- `--port` - port for PostgreSQL
+- `--user` - user for PostgreSQL
+- `--password` - password for PostgreSQL
+- `--database` - database for PostgreSQL
+- `--psql-create-schema` - path to SQL script for creating tables
+
+You can find SQL script for creating tables in the [sql/create-table-psql.sql](../../sql/create-table-psql.sql) file.
+
+You can access the help message for the script by running the following command:
+```bash
+$ uv run create-tables/create-tables.py --help
+
+usage: create-tables.py [-h] [--host HOST] [--port PORT] [--user USER] [--password PASSWORD] [--database DATABASE] [--psql-create-schema PSQL_CREATE_SCHEMA]
+
+Create tables in PostgreSQL.
+
+options:
+  -h, --help            show this help message and exit
+  --host HOST           Host for PostgreSQL
+  --port PORT           Port for PostgreSQL
+  --user USER           User for PostgreSQL
+  --password PASSWORD   Password for PostgreSQL
+  --database DATABASE   Database for PostgreSQL
+  --psql-create-schema PSQL_CREATE_SCHEMA
+```
+
+Example of the running the script would be:
+```bash
+uv run create-tables/create-tables.py \
+    --host localhost \
+    --port 5432 \
+    --user postgres \
+    --password postgres \
+    --database postgres \
+    --psql-create-schema sql/create-table-psql.sql
+```
+
+You can read technical details of the script in the [create-tables/readme.md](create-tables/readme.md) file.
+
+## Dataloader
+
+Dataloader is a scala project with spark application for performing distributed data loading. Performs according to the following alorigthm:
+1. Lists an input directory to find all parquet files
+2. Spawn a spark job for each parquet file
+3. In each job, it reads the parquet file, converts all column to correct data type, and partitions the data into year and month
+  - Partitions are saved in `/user/team18/project/data/year={year:04d}/month={month:02d}/...`
+4. Then it spawn a job to collect all partitoned data and load them into PostgreSQL
+
+Dataloader has the following arguments:
+- `--host` - host for PostgreSQL
+- `--port` - port for PostgreSQL
+- `--user` - user for PostgreSQL
+- `--password` - password for PostgreSQL
+- `--database` - database for PostgreSQL
+- `--table` - table name for PostgreSQL
+- `--source` - source directory for dataset files
+- `--merged` - directory for merged partitioned dataset files
+
+Example of the running the script would be:
+```bash
+spark-submit \
+    --master yarn \
+    --deploy-mode cluster \
+    --class tlcdataloader.TlcDataLoader \
+    target/scala-2.12/load-data-assembly-0.1.0.jar \
+    --host localhost \
+    --port 5432 \
+    --username postgres \
+    --password postgres \
+    --database postgres \
+    --table green_tripdata \
+    --source "/user/team18/project/rawdata" \
+    --merged "/user/team18/project/data"
+```
+
+You can read technical details of the script in the [dataloader/readme.md](dataloader/readme.md) file.
+
+## DEMO
+
+
+![stage1-1.png](../../.github/assets/stage1-1.png)
+> **Figure 1**
+> 
+> Deploy process and stage1 script launch. On the screenshot, we can see that scripts loads secrets from the `secrets/` directory and invokes `prepare-bin.sh` script, which downloads all the required binaries and saves them in the `$SCRIPTS/bin/` directory.
+
+
+![stage1-2.png](../../.github/assets/stage1-2.png)
+> **Figure 2**
+>
+> Download script exectution. On the screenshot, we can see that the script downloads all the files from the source and saves them in the `$PROJECT_ROOT/data/` directory.
+
+![stage1-3.png](../../.github/assets/stage1-3.png)
+> **Figure 3**
+>
+> Table creation, scala jar built and spark-submit execution. On the screenshot, we can see that the script invokes `create-tables.py` script, which creates tables in the PostgreSQL database. Script also builds `dataloadeer` scala project and invokes `spark-submit` to load the data into PostgreSQL
+
+![stage1-4.png](../../.github/assets/stage1-4.png)
+> **Figure 4**
+>
+> Dataloader spawns a lot of parallel jobs to process files in the most efficient way.
+
+![stage1-5.png](../../.github/assets/stage1-5.png)
+> **Figure 5**
+>
+> After processing file, dataloader starts to load data to the PostgreSQL database. This is the most time consuming part of the script.
+
+![stage1-6.png](../../.github/assets/stage1-6.png)
+> **Figure 6**
+>
+> But even though, thanks to the spark architecture, even such time consuming operation can be splited into smaller jobs 
+
+![stage1-7.png](../../.github/assets/stage1-7.png)
+> **Figure 7**
+>
+> Spark successfully loads data into the database, `sqoop` starts to import data from PostgreSQL to HDFS
+
+![stage1-8.png](../../.github/assets/stage1-8.png)
+> **Figure 8**
+>
+> All the rows are successfully loaded into Postgres
+
+![stage1-8.png](../../.github/assets/stage1-9.png)
+> **Figure 9**
+>
+> Sqoop successfully finished
+
+![stage1-8.png](../../.github/assets/stage1-10.png)
+> **Figure 10**
+>
+> Sqoop successfully imports data from Postgres to HDFS
+
+

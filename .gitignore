@@ -1,4 +1,7 @@
 secrets
+.scala-build
+.metals
+.vscode
 
 # MacOS Specific
 **/.DS_Store

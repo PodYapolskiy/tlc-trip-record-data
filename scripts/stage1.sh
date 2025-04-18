@@ -12,10 +12,18 @@ log() {
 SCRIPTS="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 log "Identified scripts directory as $SCRIPTS"
 
+. "$SCRIPTS/load-secrets.sh"
+if [ $? -ne 0 ]; then
+    exit 1
+fi
+
 PROJECT_ROOT="$(cd "$SCRIPTS/.." && pwd)"
-log "Identified root directory as $ROOT_DIR"
+log "Identified root directory as $PROJECT_ROOT"
 
 bash "$SCRIPTS/prepare-bin.sh"
+if [ $? -ne 0 ]; then
+    exit 1
+fi
 
 BIN="$SCRIPTS/bin"
 log "Identified binaries directory as $BIN"
@@ -23,59 +31,64 @@ log "Identified binaries directory as $BIN"
 DATA="$PROJECT_ROOT/data"
 log "Identified data directory as $DATA"
 
-if [ -d "$DATA/green_data.parquet"]; then
-    log "Downloading green data"
-    $BIN/uv run "$SCRIPTS/dataset-organization/download-sources.py" \
-        --base-url https://d37ci6vzurychx.cloudfront.net/trip-data/ \
-        --start-year 2014 \
-        --end-year 2024 \
-        --start-month 1 \
-        --end-month 12 \
-        --file-prefix green_tripdata \
-        --file-extension parquet \
-        --output-dir "$DATA" \
-        --max-concurrent 12
+log "Downloading green data"
+$BIN/uv run "$SCRIPTS/stage01/download/download-sources.py" \
+    --base-url https://storage.yandexcloud.net/dartt0n/ibd/ \
+    --start-year 2014 \
+    --end-year 2024 \
+    --start-month 1 \
+    --end-month 12 \
+    --file-prefix green_tripdata \
+    --file-extension parquet \
+    --output-dir "$DATA" \
+    --max-concurrent 12
 
-    log "Merging green data"
-    $BIN/uv run "$SCRIPTS/dataset-organization/merge-parquets.py" \
-        --source-dir $DATA \
-        --output-file $DATA/green_data.parquet \
-        --prefix "green_tripdata_" \
-        --compression zstd \
-        --compression-level 22 \
-        --file-extension ".parquet"
+log "Setting up $HDFS_ROOT/project/"
+hdfs dfs -rm -r -f $HDFS_ROOT/project/rawdata
+hdfs dfs -mkdir -p $HDFS_ROOT/project/rawdata
+hdfs dfs -mkdir -p $HDFS_ROOT/project/merged
+hdfs dfs -put $DATA $HDFS_ROOT/project/rawdata
+hdfs dfs -rm -r -f $HDFS_ROOT/project/warehouse
+hdfs dfs -mkdir -p $HDFS_ROOT/project/warehouse
 
-    log "Generated $DATA/green_data.parquet"
-else
-    log "Green data already exists"
-fi
-
-log "Loading data to PostgreSQL"
-$BIN/uv run "$SCRIPTS/dataset-organization/load-data-to-psql.py" \
-    --source-file $DATA/green_data.parquet \
+log "Creating tables in PostgreSQL"
+$BIN/uv run "$SCRIPTS/stage01/create-tables/create-tables.py" \
     --host $POSTGRES_HOST \
     --port $POSTGRES_PORT \
     --user $POSTGRES_USERNAME \
     --password $POSTGRES_PASSWORD \
     --database $POSTGRES_DATABASE \
-    --table green_tripdata \
-    --force
+    --psql-create-schema $PROJECT_ROOT/sql/create-table-psql.sql
 
-log "Deleted $DATA"
-rm -rf "$DATA"
+log "Building scala jar"
+ROLLBACK=$pwd
+cd $SCRIPTS/stage01/dataloader
+$BIN/sbt clean assembly
+cd $ROLLBACK
 
-# todo: clean hdfs://user/$TEAMNAME/project/warehouse
-
-log "Loading data from PostgreSQL to cluster using scoop"
-sqoop import-all-tables \
-    --connect jdbc:postgresql:/$POSTGRES_HOST:$POSTGRES_PORT/$POSTGRES_DATABASE \
+log "Loading data into Postgres using spark"
+spark-submit \
+    --master yarn \
+    --deploy-mode cluster \
+    --class tlcdataloader.TlcDataLoader \
+    $SCRIPTS/stage01/dataloader/target/scala-2.12/load-data-assembly-0.1.0.jar \
+    --host $POSTGRES_HOST \
+    --port $POSTGRES_PORT \
     --username $POSTGRES_USERNAME \
     --password $POSTGRES_PASSWORD \
+    --database $POSTGRES_DATABASE \
+    --table green_tripdata \
+    --source "/user/$TEAMNAME/project/rawdata/data" \
+    --merged "/user/$TEAMNAME/project/data"
+
+log "Loading data from PostgreSQL to cluster using scoop"
+sqoop import \
+    --connect jdbc:postgresql://$POSTGRES_HOST:$POSTGRES_PORT/$POSTGRES_DATABASE \
+    --username $POSTGRES_USERNAME \
+    --password $POSTGRES_PASSWORD \
+    --table green_tripdata \
     --compression-codec=snappy \
     --compress \
-    --as-avrodatafile \
-    --warehouse-dir=project/warehouse \
-    --m 1
-
-# todo: try zstd?
-# todo: move files to output?
+    --warehouse-dir=$HDFS_ROOT/project/warehouse \
+    --split-by year \
+    -m 10
