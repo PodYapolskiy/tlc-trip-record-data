@@ -59,4 +59,13 @@ else
     cp ~/.local/share/coursier/bin/* $BIN/
 fi
 
+if [ -f "$BIN/avro-tools.jar" ]; then
+    log "File $BIN/avro-tools.jar exists"
+else
+    log "Downloading avro-tools"
+    wget https://repo1.maven.org/maven2/org/apache/avro/avro-tools/1.11.3/avro-tools-1.11.3.jar -O $BIN/avro-tools.jar
+    
+    log "avro-tools downloaded to $BIN/avro-tools.jar"
+fi
+
 log "loaded binaries: $(ls $BIN/)"

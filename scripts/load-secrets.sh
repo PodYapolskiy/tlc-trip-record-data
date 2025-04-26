@@ -9,11 +9,15 @@ log() {
 
 log "loading env variables"
 
+export HADOOP_CONF_DIR=/etc/hadoop/conf
+log "HADOOP_CONF_DIR=$HADOOP_CONF_DIR"
+
 export SCRIPTS="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 log "SCRIPTS=$SCRIPTS"
 
 export PROJECT_ROOT="$(cd "$SCRIPTS/.." && pwd)"
 log "PROJECT_ROOT=$PROJECT_ROOT"
+
 
 files=(
     "POSTGRES_USERNAME"
@@ -59,3 +63,6 @@ log "TEAMNAME is loaded"
 
 export HDFS_ROOT="hdfs:///user/$TEAMNAME"
 log "HDFS_ROOT is loaded"
+
+export HIVE_PASSWORD=$(cat "$PROJECT_ROOT/secrets/HIVE_PASSWORD")
+log "HIVE_PASSWORD is loaded"

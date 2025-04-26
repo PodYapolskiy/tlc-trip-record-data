@@ -87,6 +87,7 @@ sqoop import \
     --username $POSTGRES_USERNAME \
     --password $POSTGRES_PASSWORD \
     --table green_tripdata \
+    --as-avrodatafile \
     --compression-codec=snappy \
     --compress \
     --warehouse-dir=$HDFS_ROOT/project/warehouse \
