@@ -28,20 +28,22 @@ fi
 
 BIN="$SCRIPTS/bin"
 
-
+log "clearning hive data"
 hdfs dfs -rm -r -f -skipTrash ${HDFS_ROOT}/project/hive/warehouse
-hdfs dfs -mkdir -p ${HDFS_ROOT}/project/hive/warehouse/avsc
 
-hadoop jar $BIN/avro-tools.jar getschema ${HDFS_ROOT}/project/hive/warehouse/green_tripdata/part-m-00000.avro > schema.avsc
-hdfs dfs -put schema.avsc ${HDFS_ROOT}/project/hive/warehouse/avsc
-rm schema.avsc
+log "generating avro schema"
+hdfs dfs -rm -r -f -skipTrash ${HDFS_ROOT}/project/warehouse/avsc
+hadoop jar $BIN/avro-tools.jar getschema ${HDFS_ROOT}/project/warehouse/green_tripdata/part-m-00000.avro > /tmp/schema.avsc
+hdfs dfs -mkdir -p ${HDFS_ROOT}/project/warehouse/avsc
+hdfs dfs -put /tmp/schema.avsc ${HDFS_ROOT}/project/warehouse/avsc/
+rm /tmp/schema.avsc
+log "avro schema generated"
 
-mkdir -p output
-rm -f output/hive_results.txt
-touch output/hive_results.txt
+log "preparing output file"
+mkdir -p $PROJECT_ROOT/output
+rm -f $PROJECT_ROOT/output/hive_results.txt
+touch $PROJECT_ROOT/output/hive_results.txt
 
 log "creating initial table"
-beeline -u jdbc:hive2://hadoop-03.uni.innopolis.ru:10001 -n team18 -p $HIVE_PASSWORD -f $PROJECT_ROOT/sql/db.hql >> output/hive_results.txt
-
-log "Creating partitioned tables"
-beeline -u jdbc:hive2://hadoop-03.uni.innopolis.ru:10001 -n team18 -p $HIVE_PASSWORD -f $PROJECT_ROOT/sql/partition.hql >> output/hive_results.txt
+hdfs dfs -mkdir -p ${HDFS_ROOT}/project/hive/warehouse
+beeline -u jdbc:hive2://hadoop-03.uni.innopolis.ru:10001 -n team18 -p $HIVE_PASSWORD -f $PROJECT_ROOT/sql/db.hql >> $PROJECT_ROOT/output/hive_results.txt

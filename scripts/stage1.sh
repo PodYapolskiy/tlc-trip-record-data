@@ -81,6 +81,9 @@ spark-submit \
     --source "/user/$TEAMNAME/project/rawdata/data" \
     --merged "/user/$TEAMNAME/project/data"
 
+log "cleaning raw data"
+hdfs dfs -rm -r -f -skipTrash $HDFS_ROOT/project/rawdata
+
 log "Loading data from PostgreSQL to cluster using scoop"
 sqoop import \
     --connect jdbc:postgresql://$POSTGRES_HOST:$POSTGRES_PORT/$POSTGRES_DATABASE \
