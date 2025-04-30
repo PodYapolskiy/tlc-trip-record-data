@@ -29,7 +29,7 @@ CREATE EXTERNAL TABLE green_tripdata (
 STORED AS AVRO
 LOCATION 'project/warehouse/green_tripdata'
 TBLPROPERTIES (
-  'avro.schema.url'='project/warehouse/avsc/schema.avsc',
+  'avro.schema.url'='project/hive/warehouse/avsc/schema.avsc',
   'avro.compress'='snappy'
 );
 

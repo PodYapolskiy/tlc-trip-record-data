@@ -44,11 +44,11 @@ $BIN/uv run "$SCRIPTS/stage01/download/download-sources.py" \
     --max-concurrent 12
 
 log "Setting up $HDFS_ROOT/project/"
-hdfs dfs -rm -r -f $HDFS_ROOT/project/rawdata
+hdfs dfs -rm -r -f -skipTrash $HDFS_ROOT/project/rawdata
 hdfs dfs -mkdir -p $HDFS_ROOT/project/rawdata
 hdfs dfs -mkdir -p $HDFS_ROOT/project/merged
 hdfs dfs -put $DATA $HDFS_ROOT/project/rawdata
-hdfs dfs -rm -r -f $HDFS_ROOT/project/warehouse
+hdfs dfs -rm -r -f -skipTrash $HDFS_ROOT/project/warehouse
 hdfs dfs -mkdir -p $HDFS_ROOT/project/warehouse
 
 log "Creating tables in PostgreSQL"
