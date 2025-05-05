@@ -14,7 +14,7 @@ import argparse
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Generate report from parquet files.")
+    parser = argparse.ArgumentParser(description="Merge multiple parquet files.")
     parser.add_argument(
         "--source-dir",
         default="data",
