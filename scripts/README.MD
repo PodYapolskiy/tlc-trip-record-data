@@ -97,7 +97,7 @@ Then, the script invokes `download-sources.py` script, which downloads all the d
 
 After downloading the dataset files into local file system, the script setups HDFS and migrates the data to the cluster, to make it available for all cluster nodes
 
-Finally, the scripts builds `dataloadeer` scala project and invokes `spark-submit` to load the data into PostgreSQL, creating table using `create-tables.py` script beforehand.
+Finally, the scripts builds `dataloadeer` scala project and invokes `spark-submit` to load the data into PostgreSQL, creating table using `create_tables.py` script beforehand.
 
 As the very last step, `stage1.sh` invokes `sqoop` tool to import the data from PostgreSQL to Hive for further processing.
 

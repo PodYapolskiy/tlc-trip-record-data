@@ -1,6 +1,6 @@
-# `create-tables.py` script
+# `create_tables.py` script
 
-- [`create-tables.py` script](#create-tablespy-script)
+- [`create_tables.py` script](#create-tablespy-script)
   - [Script Arguments](#script-arguments)
   - [Script Execution](#script-execution)
   - [Used Libraries](#used-libraries)
@@ -20,7 +20,7 @@ This is a very simple script, which loads SQL script from the provided path and 
 ## Script Execution
 
 ```bash
-uv run create-tables/create-tables.py \
+uv run create-tables/create_tables.py \
     --host localhost \
     --port 5432 \
     --user postgres \

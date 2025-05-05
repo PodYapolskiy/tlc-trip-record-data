@@ -373,9 +373,9 @@ You can find SQL script for creating tables in the [sql/create-table-psql.sql](.
 
 You can access the help message for the script by running the following command:
 ```bash
-$ uv run create-tables/create-tables.py --help
+$ uv run create-tables/create_tables.py --help
 
-usage: create-tables.py [-h] [--host HOST] [--port PORT] [--user USER] [--password PASSWORD] [--database DATABASE] [--psql-create-schema PSQL_CREATE_SCHEMA]
+usage: create_tables.py [-h] [--host HOST] [--port PORT] [--user USER] [--password PASSWORD] [--database DATABASE] [--psql-create-schema PSQL_CREATE_SCHEMA]
 
 Create tables in PostgreSQL.
 
@@ -391,7 +391,7 @@ options:
 
 Example of the running the script would be:
 ```bash
-uv run create-tables/create-tables.py \
+uv run create-tables/create_tables.py \
     --host localhost \
     --port 5432 \
     --user postgres \
@@ -457,7 +457,7 @@ You can read technical details of the script in the [dataloader/readme.md](datal
 ![stage1-3.png](../../.github/assets/stage1-3.png)
 > **Figure 3**
 >
-> Table creation, scala jar built and spark-submit execution. On the screenshot, we can see that the script invokes `create-tables.py` script, which creates tables in the PostgreSQL database. Script also builds `dataloadeer` scala project and invokes `spark-submit` to load the data into PostgreSQL
+> Table creation, scala jar built and spark-submit execution. On the screenshot, we can see that the script invokes `create_tables.py` script, which creates tables in the PostgreSQL database. Script also builds `dataloadeer` scala project and invokes `spark-submit` to load the data into PostgreSQL
 
 ![stage1-4.png](../../.github/assets/stage1-4.png)
 > **Figure 4**
