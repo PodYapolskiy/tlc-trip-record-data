@@ -5,6 +5,7 @@
   - [Script Execution](#script-execution)
   - [Used Libraries](#used-libraries)
 
+**Note**: This script is not used in final implementation, we have included it in the repository to show different solutions to merge the files.
 
 This script merges all parquet files from the provided directory into a single parquet file. It uses the [polars](https://www.pola.rs/) library for merging the data. The script supports the following compression types:
 - lz4

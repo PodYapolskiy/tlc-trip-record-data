@@ -15,7 +15,7 @@ This stage is responsible for collecting data from the source, transforming data
 
 ## Development Process
 For easier development and deployment process, this project uses [uv](https://github.com/astral-sh/uv) tool for Python scripts and [sbt](https://www.scala-sbt.org/) with [assembly plugin](https://github.com/sbt/sbt-assembly) for Scala scripts. Make sure you have installed these tools before continuing development process.
-Using `uv` also comes with a advantage of being able to specify script dependencies in the script itself, and exeucuting `uv run script.py` will automatically download all the dependencies and execute the script in the virtual environment.
+Using `uv` also comes with a advantage of being able to specify script dependencies in the script itself, and executing `uv run script.py` will automatically download all the dependencies and execute the script in the virtual environment.
 
 ## File Structure
 
@@ -42,7 +42,7 @@ Using `uv` also comes with a advantage of being able to specify script dependenc
 
 ## Download dataset
 
-We have manually downloaded all the dataset files from the source and have putted them in the Yandex Cloud Object Storage. Yandex Cloud object is configured that way, so it's content publicly available for download, however manipulation actions are limited to our team members. We have also setup a website for hosting generated index of the dataset, which is available at the following URLs:
+We have manually downloaded all the dataset files from the source and have putted them in the Yandex Cloud Object Storage. Yandex Cloud object is configured that way, so it's content publicly available for download, however, manipulation actions are limited to our team members. We have also set up a website for hosting generated index of the dataset, which is available at the following URLs:
 1. [bigdata.inno.dartt0n.ru](https://bigdata.inno.dartt0n.ru)
 2. [dartt0n.website.yandexcloud.net](https://dartt0n.website.yandexcloud.net/ibd/index.html)
 
@@ -53,7 +53,7 @@ where:
 - `{year}` - year of the dataset file in YYYY format
 - `{month}` - month of the dataset file in MM format
 
-For example, to download the dataset file for march 2024, you can use the following URL:
+For example, to download the dataset file for March 2024, you can use the following URL:
 - [https://storage.yandexcloud.net/dartt0n/ibd/green_tripdata_2024-03.parquet](https://storage.yandexcloud.net/dartt0n/ibd/green_tripdata_2024-03.parquet)
 
 ## Download Script
@@ -124,9 +124,9 @@ You can read technical details of the script in the [download/readme.md](downloa
 After downloading the dataset files, we have created an index of the dataset. This index is available at the following URL:
 - [https://bigdata.inno.dartt0n.ru/ibd/index.html](https://bigdata.inno.dartt0n.ru/ibd/index.html)
 
-The indexing script also reads number of rows in the each parquet file using `pyarrow` and calculates the total number of rows in the dataset.
+The indexing script also reads number of rows in each parquet file using `pyarrow` and calculates the total number of rows in the dataset.
 
-The script also support generating index in the [typst](https://typst.app/) and markdown formats.
+The script also support generating index in the [typst](https://typst.app/) and Markdown formats.
 
 The index scripts has the following arguments:
 - `--source-dir` - source directory for dataset files
@@ -170,7 +170,7 @@ You can read technical details of the script in the [index/readme.md](index/read
 
 
 | year      | month | size (mb)  | rows         | file                                                                                                         |
-| --------- | ----- | ---------- | ------------ | ------------------------------------------------------------------------------------------------------------ |
+|-----------|-------|------------|--------------|--------------------------------------------------------------------------------------------------------------|
 | 2014      | 01    | 11.8       | 803860       | [green_tripdata_2014-01.parquet](https://dartt0n.website.yandexcloud.net/ibd/green_tripdata_2014-01.parquet) |
 | 2014      | 02    | 14.5       | 1005242      | [green_tripdata_2014-02.parquet](https://dartt0n.website.yandexcloud.net/ibd/green_tripdata_2014-02.parquet) |
 | 2014      | 03    | 18.5       | 1293471      | [green_tripdata_2014-03.parquet](https://dartt0n.website.yandexcloud.net/ibd/green_tripdata_2014-03.parquet) |
@@ -308,7 +308,7 @@ You can read technical details of the script in the [index/readme.md](index/read
 
 </details>
 
-## Merge Script
+## Merge Script (*Deprecated*)
 
 After downloading the dataset files, we have created a script, which merges all the files into a single parquet file. This script is based upon the [polars](https://www.pola.rs/) library and more specifically on the lazyframe streaming API. This API allows to process the data in a streaming manner, processing chunk by chunk keeping the memory usage low. However, this approach has a major drawback, that the code could be executed only on a single node and therefore limited by computational resources of a single machine.
 
@@ -357,7 +357,7 @@ uv run merge/merge_parquets.py \
 
 Ypu can read technical details of the script in the [merge/readme.md](merge/readme.md) file.
 
-
+In the final solution we merge the files using Spark distributed dataframe conversion and merge as separate jobs.
 
 ## Create tables
 
@@ -404,12 +404,12 @@ You can read technical details of the script in the [create-tables/readme.md](cr
 
 ## Dataloader
 
-Dataloader is a scala project with spark application for performing distributed data loading. Performs according to the following alorigthm:
+Dataloader is a scala project with spark application for performing distributed data loading. Performs according to the following algorithm:
 1. Lists an input directory to find all parquet files
 2. Spawn a spark job for each parquet file
 3. In each job, it reads the parquet file, converts all column to correct data type, and partitions the data into year and month
-  - Partitions are saved in `/user/team18/project/data/year={year:04d}/month={month:02d}/...`
-4. Then it spawn a job to collect all partitoned data and load them into PostgreSQL
+   - Partitions are saved in `/user/team18/project/data/year={year:04d}/month={month:02d}/...`
+4. Then it spawn a job to collect all partitioned data and load them into PostgreSQL
 
 Dataloader has the following arguments:
 - `--host` - host for PostgreSQL
@@ -452,7 +452,7 @@ You can read technical details of the script in the [dataloader/readme.md](datal
 ![stage1-2.png](../../.github/assets/stage1-2.png)
 > **Figure 2**
 >
-> Download script exectution. On the screenshot, we can see that the script downloads all the files from the source and saves them in the `$PROJECT_ROOT/data/` directory.
+> Download script execution. On the screenshot, we can see that the script downloads all the files from the source and saves them in the `$PROJECT_ROOT/data/` directory.
 
 ![stage1-3.png](../../.github/assets/stage1-3.png)
 > **Figure 3**
@@ -467,12 +467,12 @@ You can read technical details of the script in the [dataloader/readme.md](datal
 ![stage1-5.png](../../.github/assets/stage1-5.png)
 > **Figure 5**
 >
-> After processing file, dataloader starts to load data to the PostgreSQL database. This is the most time consuming part of the script.
+> After processing file, dataloader starts to load data to the PostgreSQL database. This is the most time-consuming part of the script.
 
 ![stage1-6.png](../../.github/assets/stage1-6.png)
 > **Figure 6**
 >
-> But even though, thanks to the spark architecture, even such time consuming operation can be splited into smaller jobs 
+> But even though, thanks to the spark architecture, even such time-consuming operation can be split into smaller jobs 
 
 ![stage1-7.png](../../.github/assets/stage1-7.png)
 > **Figure 7**

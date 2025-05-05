@@ -1,10 +1,10 @@
 # `dataloader` scala project
 
-This is a scala project with spark application for performing distributed data loading. Performs according to the following alorigthm:
+This is a scala project with spark application for performing distributed data loading. Performs according to the following algorithm:
 1. Lists an input directory to find all parquet files
 2. Spawn a spark job for each parquet file
 3. In each job, it reads the parquet file, converts all column to correct data type, and partitions the data into year and month
-  - Partitions are saved in `/user/team18/project/data/year={year:04d}/month={month:02d}/...`
+   - Partitions are saved in `/user/team18/project/data/year={year:04d}/month={month:02d}/...`
 4. Then it spawn a job to collect all partitoned data and load them into PostgreSQL
 
 More specifically, the script creates a `Future` object for each parquet file. Inside each `Future` object, it defines a DAG of spark operations and waits for operation to finish. The script launches all the `Future` objects in parallel, and waits for all of them to finish. After that, it loads the generated partitioned data into PostgreSQL.
