@@ -33,7 +33,7 @@ hdfs dfs -rm -r -f -skipTrash ${HDFS_ROOT}/project/hive/warehouse
 
 log "generating avro schema"
 hdfs dfs -rm -r -f -skipTrash ${HDFS_ROOT}/project/warehouse/avsc
-hadoop jar $BIN/avro-tools.jar getschema ${HDFS_ROOT}/project/warehouse/green_tripdata/part-m-00000.avro > /tmp/schema.avsc
+hadoop jar $BIN/avro-tools.jar getschema ${HDFS_ROOT}/project/warehouse/green_tripdata/part-m-00000.avro >/tmp/schema.avsc
 hdfs dfs -mkdir -p ${HDFS_ROOT}/project/warehouse/avsc
 hdfs dfs -put /tmp/schema.avsc ${HDFS_ROOT}/project/warehouse/avsc/
 rm /tmp/schema.avsc
@@ -46,18 +46,38 @@ touch $PROJECT_ROOT/output/hive_results.txt
 
 log "creating initial table"
 hdfs dfs -mkdir -p ${HDFS_ROOT}/project/hive/warehouse
-beeline -u jdbc:hive2://hadoop-03.uni.innopolis.ru:10001 -n team18 -p $HIVE_PASSWORD -f $PROJECT_ROOT/sql/db.hql >> $PROJECT_ROOT/output/hive_results.txt
+beeline -u jdbc:hive2://hadoop-03.uni.innopolis.ru:10001 -n team18 -p $HIVE_PASSWORD -f $PROJECT_ROOT/sql/db.hql >>$PROJECT_ROOT/output/hive_results.txt
 
 # beeline -u jdbc:hive2://hadoop-03.uni.innopolis.ru:10001 -n team18 -p $HIVE_PASSWORD
+hdfs dfs -rm -r -f -skipTrash ${HDFS_ROOT}/project/hive/eda
+hdfs dfs -mkdir -p ${HDFS_ROOT}/project/hive/eda
 
 log "running q1"
-echo "vendorid_null_values,vendorid_null_values_percent,lpep_pickup_datetime_null_values,lpep_pickup_datetime_null_values_percent | lpep_dropoff_datetime_null_values,lpep_dropoff_datetime_null_values_percent | store_and_fwd_flag_null_values,store_and_fwd_flag_null_values_percent,ratecodeid_null_values,ratecodeid_null_values_percent,pulocationid_null_values,pulocationid_null_values_percent,dolocationid_null_values,dolocationid_null_values_percent,passenger_count_null_values,passenger_count_null_values_percent,trip_distance_null_values,trip_distance_null_values_percent,fare_amount_null_values,fare_amount_null_values_percent,extra_null_values,extra_null_values_percent,mta_tax_null_values,mta_tax_null_values_percent,tip_amount_null_values,tip_amount_null_values_percent,tolls_amount_null_values,tolls_amount_null_values_percent,ehail_fee_null_values,ehail_fee_null_values_percent,improvement_surcharge_null_values,improvement_surcharge_null_values_percent | total_amount_null_values,total_amount_null_values_percent,payment_type_null_values,payment_type_null_values_percent,trip_type_null_values,trip_type_null_values_percent,congestion_surcharge_null_values,congestion_surcharge_null_values_percent" > $PROJECT_ROOT/output/q1_result.txt
-beeline -u jdbc:hive2://hadoop-03.uni.innopolis.ru:10001 -n team18 -p $HIVE_PASSWORD -f $PROJECT_ROOT/sql/q1.hql >> $PROJECT_ROOT/output/q1_result.txt
+beeline -u jdbc:hive2://hadoop-03.uni.innopolis.ru:10001 -n team18 -p $HIVE_PASSWORD -f $PROJECT_ROOT/sql/q1.hql
+echo "column_name,null_count,null_percent" >$PROJECT_ROOT/output/q1_result.txt
+hdfs dfs -cat "${HDFS_ROOT}/project/hive/eda/q1_result/*" >>$PROJECT_ROOT/output/q1_result.txt
 
 log "running q2"
-echo "invalid_count,invalid_percent" > $PROJECT_ROOT/output/q2_result.txt
-beeline -u jdbc:hive2://hadoop-03.uni.innopolis.ru:10001 -n team18 -p $HIVE_PASSWORD -f $PROJECT_ROOT/sql/q2.hql >> $PROJECT_ROOT/output/q2_result.txt
+beeline -u jdbc:hive2://hadoop-03.uni.innopolis.ru:10001 -n team18 -p $HIVE_PASSWORD -f $PROJECT_ROOT/sql/q2.hql
+echo "invalid_count,invalid_percent" >$PROJECT_ROOT/output/q2_result.txt
+hdfs dfs -cat "${HDFS_ROOT}/project/hive/eda/q2_result/*" >>$PROJECT_ROOT/output/q2_result.txt
 
 log "running q3"
-echo "year,corr_duration_price,corr_distance_price" > $PROJECT_ROOT/output/q3_result.txt
-beeline -u jdbc:hive2://hadoop-03.uni.innopolis.ru:10001 -n team18 -p $HIVE_PASSWORD -f $PROJECT_ROOT/sql/q3.hql > $PROJECT_ROOT/output/q3_result.txt
+
+python3 -m venv $SCRIPTS/stage02/.venv
+source $SCRIPTS/stage02/.venv/bin/activate
+pip install -r $SCRIPTS/stage02/requirements.txt
+rm -rf $BIN/.venv.tar.gz
+$SCRIPTS/stage02/.venv/bin/venv-pack -o $BIN/.venv.tar.gz
+
+export PYSPARK_DRIVER_PYTHON=".venv/bin/python"
+export PYSPARK_PYTHON=$PYSPARK_DRIVER_PYTHON
+
+spark-submit \
+    --master yarn \
+    --archives $BIN/.venv.tar.gz#.venv \
+    --deploy-mode cluster \
+    $SCRIPTS/stage02/q3.py
+
+echo "year,corr_duration_price,corr_distance_price" >$PROJECT_ROOT/output/q3_result.txt
+hdfs dfs -cat "${HDFS_ROOT}/project/hive/eda/q3_result/*" >>$PROJECT_ROOT/output/q3_result.txt
