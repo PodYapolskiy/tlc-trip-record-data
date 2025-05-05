@@ -81,7 +81,7 @@ def generate_output(
 
     rendered_content = template.render(files=files_data, summary=summary)
 
-    with open(output_file, "w", encoding='utf-8') as f:
+    with open(output_file, "w", encoding="utf-8") as f:
         f.write(rendered_content)
 
 
