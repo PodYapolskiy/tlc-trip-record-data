@@ -6,7 +6,10 @@
 # ]
 # ///
 
-"""Module for downloading data from the provided source based on given time range. Saves data to the provided directory."""
+"""
+Module for downloading data from the provided source based on given time range.
+Saves data to the provided directory.
+"""
 
 import argparse
 import os

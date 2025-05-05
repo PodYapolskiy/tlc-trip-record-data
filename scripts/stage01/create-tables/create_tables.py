@@ -63,7 +63,13 @@ if __name__ == "__main__":
 
     print("connecting to postgres")
     with psycopg.connect(
-        f"user={args.user} password={args.password} host={args.host} port={args.port} dbname={args.database}"
+            (
+                    f"user={args.user} " 
+                    f"password={args.password} " 
+                    f"host={args.host} " 
+                    f"port={args.port} " 
+                    f"dbname={args.database}"
+            )
     ) as connection:
         print("creating table")
         with connection.cursor() as cursor:
