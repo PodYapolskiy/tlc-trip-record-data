@@ -25,7 +25,7 @@ The script supports generating index in the following formats:
 ## Script Execution
 
 ```bash
-uv run index/generate-index.py \
+uv run index/generate_index.py \
     --source-dir data \
     --output-format html \
     --output-file index.html \

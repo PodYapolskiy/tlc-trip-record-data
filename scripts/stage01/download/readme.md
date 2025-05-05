@@ -1,6 +1,6 @@
-# `download-sources.py` script
+# `download_sources.py` script
 
-- [`download-sources.py` script](#download-sourcespy-script)
+- [`download_sources.py` script](#download_sourcespy-script)
   - [Script Arguments](#script-arguments)
   - [Script Execution](#script-execution)
   - [Used Libraries](#used-libraries)
@@ -26,7 +26,7 @@ Firstly, script generates a list of all the files to be downloaded. Then, it spa
 ## Script Execution
 
 ```bash
-uv run download/download-sources.py \
+uv run download/download_sources.py \
     --base-url https://storage.yandexcloud.net/dartt0n/ibd/ \
     --start-year 2014 \
     --end-year 2024 \
