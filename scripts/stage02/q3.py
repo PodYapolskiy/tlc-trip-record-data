@@ -27,6 +27,7 @@ q3 = reduce(
                 "total_amount",
             ).alias("corr_duration_price"),
             F.corr("trip_distance", "total_amount").alias("corr_distance_price"),
+            F.corr("passenger_count", "total_amount").alias("corr_passangers_price"),
         )
         for year in range(2014, 2025)
     ],
