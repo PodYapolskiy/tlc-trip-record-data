@@ -24,7 +24,7 @@ Using `uv` also comes with a advantage of being able to specify script dependenc
 - [`pyproject.toml`](pyproject.toml) - project configuration file
 - [`uv.lcok`](uv.lock) - lock file for project dependencies
 - [`download/`](download/)
-  - [`download-sources.py`](download/download-sources.py) - script for downloading dataset files
+  - [`download_sources.py`](download/download_sources.py) - script for downloading dataset files
   -  [`readme.md`](download/readme.md) - script technical description
 - [`index/`](index/)
   -  [`templates/`](index/templates/) - [Jinja2](https://jinja.palletsprojects.com) template files for generating report
@@ -60,7 +60,7 @@ For example, to download the dataset file for march 2024, you can use the follow
 
 However, since 10 years of monthly data is exactly 120 files, downloading them manually is not a good idea. Therefore, we have created a script, which downloads all files from the bucket (by specifying range of years and months) and stores them in the local file system for further processing.
 
-This script is available in the [download/download-sources.py](download/download-sources.py) file.
+This script is available in the [download/download_sources.py](download/download_sources.py) file.
 
 This script has the following arguments:
 - `--base-url` - base URL for downloading files
@@ -75,9 +75,9 @@ This script has the following arguments:
 
 You can access the help message for the script by running the following command:
 ```bash
-$ uv run download/download-sources.py --help
+$ uv run download/download_sources.py --help
 
-usage: download-sources.py [-h] [--base-url BASE_URL] [--max-concurrent MAX_CONCURRENT] [--start-year START_YEAR] [--end-year END_YEAR]
+usage: download_sources.py [-h] [--base-url BASE_URL] [--max-concurrent MAX_CONCURRENT] [--start-year START_YEAR] [--end-year END_YEAR]
                            [--start-month START_MONTH] [--end-month END_MONTH] [--file-prefix FILE_PREFIX] [--file-extension FILE_EXTENSION]
                            [--output-dir OUTPUT_DIR]
 
@@ -105,7 +105,7 @@ options:
 
 Example of the running the script would be:
 ```bash
-uv run download-sources.py \
+uv run download_sources.py \
     --base-url https://storage.yandexcloud.net/dartt0n/ibd/ \
     --start-year 2014 \
     --end-year 2024 \
@@ -137,7 +137,7 @@ The index scripts has the following arguments:
 
 You can access the help message for the script by running the following command:
 ```bash
-$ uv run index/generate-index.py --help
+$ uv run index/generate_index.py --help
 
 Generate report from parquet files.
 
@@ -155,7 +155,7 @@ options:
 
 Example of the running the script would be:
 ```bash
-uv run index/generate-index.py \
+uv run index/generate_index.py \
     --source-dir data \
     --output-format html \
     --output-file index.html \

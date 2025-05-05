@@ -32,7 +32,7 @@ DATA="$PROJECT_ROOT/data"
 log "Identified data directory as $DATA"
 
 log "Downloading green data"
-$BIN/uv run "$SCRIPTS/stage01/download/download-sources.py" \
+$BIN/uv run "$SCRIPTS/stage01/download/download_sources.py" \
     --base-url https://storage.yandexcloud.net/dartt0n/ibd/ \
     --start-year 2014 \
     --end-year 2024 \

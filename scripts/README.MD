@@ -93,7 +93,7 @@ After that, script loads secrets using `load-secrets.sh` script. This script rea
 
 Then, `stage1.sh` invokes `prepare-bin.sh` script, which downloads all the required binaries and saves them in the `$SCRIPTS/bin/` directory. This directory would be used to keep all the binaries and external dependencies of the script. Most notably, `prepare-bin.sh` downloads `uv` and `sbt` binaries, which are required for running the scripts.
 
-Then, the script invokes `download-sources.py` script, which downloads all the dataset files from the source and saves them in the `$PROJECT_ROOT/data/` directory.
+Then, the script invokes `download_sources.py` script, which downloads all the dataset files from the source and saves them in the `$PROJECT_ROOT/data/` directory.
 
 After downloading the dataset files into local file system, the script setups HDFS and migrates the data to the cluster, to make it available for all cluster nodes
 
