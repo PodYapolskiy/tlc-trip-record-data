@@ -90,5 +90,28 @@ spark-submit \
     --deploy-mode cluster \
     $SCRIPTS/stage02/q4.py
 
-echo "year,month,trip_distance,total_amount,passenger_count" >$PROJECT_ROOT/output/q4_result.txt
+echo "year,month,distance,price,passenger_count" >$PROJECT_ROOT/output/q4_result.txt
 hdfs dfs -cat "${HDFS_ROOT}/project/hive/eda/q4_result/*" >>$PROJECT_ROOT/output/q4_result.txt
+
+log "running q5"
+
+spark-submit \
+    --master yarn \
+    --archives $BIN/.venv.tar.gz#.venv \
+    --deploy-mode cluster \
+    $SCRIPTS/stage02/q5.py
+
+echo "price,pickup_hour,dropoff_hour" >$PROJECT_ROOT/output/q5_result.txt
+hdfs dfs -cat "${HDFS_ROOT}/project/hive/eda/q5_result/*" >>$PROJECT_ROOT/output/q5_result.txt
+
+
+log "running q6"
+
+spark-submit \
+    --master yarn \
+    --archives $BIN/.venv.tar.gz#.venv \
+    --deploy-mode cluster \
+    $SCRIPTS/stage02/q6.py
+
+echo "price,pickup_location,dropoff_location" >$PROJECT_ROOT/output/q6_result.txt
+hdfs dfs -cat "${HDFS_ROOT}/project/hive/eda/q6_result/*" >>$PROJECT_ROOT/output/q6_result.txt
