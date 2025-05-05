@@ -6,16 +6,18 @@
 # ]
 # ///
 
+"""Module for downloading data from the provided source based on given time range. Saves data to the provided directory."""
 
+import argparse
+import os
 import asyncio
 from types import CoroutineType
 from typing import Any
 import httpx
-import argparse
-import os
 
 
 def parse_args():
+    """Function parsing command line arguments."""
     parser = argparse.ArgumentParser(description="Download NYC taxi trip data.")
     parser.add_argument(
         "--base-url",
@@ -80,6 +82,7 @@ async def download_and_save(
     output_dir: str,
     semaphore: asyncio.Semaphore,
 ):
+    """Function downloading files from remote"""
     async with semaphore:
         full_path = os.path.join(output_dir, filepath)
         with open(full_path, "wb") as f:
@@ -91,6 +94,7 @@ async def download_and_save(
 
 
 async def main():
+    """Function initializing download"""
     args = parse_args()
 
     base = args.base_url

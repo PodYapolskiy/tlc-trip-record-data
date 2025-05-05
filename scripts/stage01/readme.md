@@ -34,7 +34,7 @@ Using `uv` also comes with a advantage of being able to specify script dependenc
   - [`index.py`](index/index.py) - script for generating report
   - [`readme.md`](index/readme.md) - script technical description
 - [`merge/`](merge/)
-  - [`merge-parquets.py`](merge/merge-parquets.py) - script for merging dataset files on single machine using polars
+  - [`merge_parquets.py`](merge/merge_parquets.py) - script for merging dataset files on single machine using polars
   - [`readme.md`](merge/readme.md) - script technical description
 - [`dataloader/`](dataloader/) - scala project with spark application for performing distributed data loading
   - [`build.sbt`](dataloader/build.sbt) - sbt build file
@@ -323,7 +323,7 @@ Merge script has the following arguments:
 
 You can access the help message for the script by running the following command:
 ```bash
-$ uv run merge/merge-parquets.py --help
+$ uv run merge/merge_parquets.py --help
 
                          [--compression {lz4,uncompressed,snappy,gzip,lzo,brotli,zstd}] [--compression-level COMPRESSION_LEVEL]
 
@@ -346,7 +346,7 @@ options:
 
 Example of the running the script would be:
 ```bash
-uv run merge/merge-parquets.py \
+uv run merge/merge_parquets.py \
     --source-dir data \
     --output-file merged.parquet \
     --prefix green_tripdata \

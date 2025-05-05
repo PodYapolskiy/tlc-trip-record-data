@@ -1,6 +1,6 @@
-# `merge-parquets.py` script
+# `merge_parquets.py` script
 
-- [`merge-parquets.py` script](#merge-parquetspy-script)
+- [`merge_parquets.py` script](#merge_parquetspy-script)
   - [Script Arguments](#script-arguments)
   - [Script Execution](#script-execution)
   - [Used Libraries](#used-libraries)
@@ -32,7 +32,7 @@ Another important aspect of the script is that it uses `pl.concat(frames, how="v
 ## Script Execution
 
 ```bash
-uv run merge/merge-parquets.py \
+uv run merge/merge_parquets.py \
     --source-dir data \
     --output-file merged.parquet \
     --prefix green_tripdata \

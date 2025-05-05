@@ -6,11 +6,12 @@
 # ]
 # ///
 
+"""Module merging parquets files using polars"""
 
+import argparse
 from datetime import datetime
 from pathlib import Path
 import polars as pl
-import argparse
 
 
 if __name__ == "__main__":

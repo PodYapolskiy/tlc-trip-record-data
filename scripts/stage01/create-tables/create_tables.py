@@ -6,6 +6,8 @@
 # ]
 # ///
 
+"""Module creating PostgreSQL table in a given database using provided credentials."""
+
 import argparse
 from pathlib import Path
 from psycopg.sql import SQL
@@ -56,7 +58,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    with open(args.psql_create_schema) as f:
+    with open(args.psql_create_schema, encoding="utf-8") as f:
         CREATE_SQL = SQL(f.read())
 
     print("connecting to postgres")

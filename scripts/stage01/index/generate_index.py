@@ -7,6 +7,7 @@
 # ]
 # ///
 
+"""Module for generating report with number of rows in parquet files in a provided directory."""
 
 import glob
 import os
@@ -16,6 +17,7 @@ from jinja2 import Environment, FileSystemLoader
 
 
 def get_parquet_files_data(directory, replace_root=None):
+    """Function extracting file data from files in provided directory"""
     files = sorted(glob.glob(f"{directory}/green_tripdata_*.parquet"))
     files_data = []
 
@@ -53,6 +55,7 @@ def generate_output(
     include_summary=False,
     replace_root=None,
 ):
+    """Function creating output about files in provided directory using provided output format"""
     env = Environment(loader=FileSystemLoader("templates"))
 
     if output_format.lower() == "html":
@@ -78,7 +81,7 @@ def generate_output(
 
     rendered_content = template.render(files=files_data, summary=summary)
 
-    with open(output_file, "w") as f:
+    with open(output_file, "w", encoding='utf-8') as f:
         f.write(rendered_content)
 
 
