@@ -31,9 +31,20 @@ for year in range(2014, 2025):
                 & (F.month(F.col("lpep_dropoff_datetime")) == month)
             )
             .select(
-                F.col("total_amount").alias("price"),
+                F.col("fare_amount").alias("price"),
                 F.col("pulocationid").alias("pickup_location"),
                 F.col("dolocationid").alias("dropoff_location"),
+            )
+            .groupBy("pickup_location", "dropoff_location")
+            .agg(
+                F.avg("price").alias("average_price"),
+            )
+            .select(
+                F.col("pickup_location"),
+                F.col("dropoff_location"),
+                F.lit(year).alias("year"),
+                F.lit(month).alias("month"),
+                F.col("average_price"),
             )
         )
 

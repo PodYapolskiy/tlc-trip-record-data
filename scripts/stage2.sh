@@ -70,8 +70,8 @@ pip install -r $SCRIPTS/stage02/requirements.txt
 rm -rf $BIN/.venv.tar.gz
 $SCRIPTS/stage02/.venv/bin/venv-pack -o $BIN/.venv.tar.gz
 
-export PYSPARK_DRIVER_PYTHON=$SCRIPTS/stage02/.venv/bin/python
-export PYSPARK_PYTHON=".venv/bin/python"
+export PYSPARK_DRIVER_PYTHON=".venv/bin/python"
+export PYSPARK_PYTHON="$SCRIPTS/stage02/.venv/bin/python"
 
 spark-submit \
     --master yarn \
