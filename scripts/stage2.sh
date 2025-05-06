@@ -70,8 +70,8 @@ pip install -r $SCRIPTS/stage02/requirements.txt
 rm -rf $BIN/.venv.tar.gz
 $SCRIPTS/stage02/.venv/bin/venv-pack -o $BIN/.venv.tar.gz
 
-export PYSPARK_DRIVER_PYTHON=".venv/bin/python"
-export PYSPARK_PYTHON=$PYSPARK_DRIVER_PYTHON
+export PYSPARK_DRIVER_PYTHON=$SCRIPTS/stage02/.venv/bin/python
+export PYSPARK_PYTHON=".venv/bin/python"
 
 spark-submit \
     --master yarn \
@@ -103,7 +103,6 @@ spark-submit \
 
 echo "price,pickup_hour,dropoff_hour" >$PROJECT_ROOT/output/q5_result.txt
 hdfs dfs -cat "${HDFS_ROOT}/project/hive/eda/q5_result/*" >>$PROJECT_ROOT/output/q5_result.txt
-
 
 log "running q6"
 

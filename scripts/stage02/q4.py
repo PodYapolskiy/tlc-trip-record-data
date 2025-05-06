@@ -1,3 +1,4 @@
+from datetime import datetime
 from functools import reduce
 from pyspark.sql import SparkSession
 import pyspark.sql.functions as F
@@ -23,9 +24,10 @@ for year in range(2014, 2025):
         ).select(
             F.lit(year).alias("year"),
             F.lit(month).alias("month"),
+            F.lit(datetime(year, month, 1)).alias("date"),
             (
-                F.col("lpep_pickup_datetime").cast("double")
-                - F.col("lpep_dropoff_datetime").cast("double")
+                F.col("lpep_dropoff_datetime").cast("double")
+                - F.col("lpep_pickup_datetime").cast("double")
             ).alias("duration"),
             F.col("trip_distance").alias("distance"),
             F.col("total_amount").alias("price"),

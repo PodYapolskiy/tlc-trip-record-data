@@ -32,8 +32,8 @@ for year in range(2014, 2025):
             )
             .select(
                 F.col("total_amount").alias("price"),
-                F.hour(F.col("pulocationid")).alias("pickup_location"),
-                F.hour(F.col("dolocationid")).alias("dropoff_location"),
+                F.col("pulocationid").alias("pickup_location"),
+                F.col("dolocationid").alias("dropoff_location"),
             )
         )
 
