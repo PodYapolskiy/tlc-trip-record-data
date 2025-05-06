@@ -1,4 +1,7 @@
-import os
+"""
+Stage 3
+"""
+
 import time
 
 from pyspark.sql import SparkSession
@@ -21,15 +24,15 @@ from pyspark.ml.feature import (
 start_time = time.time()
 
 
-team = 18
-warehouse = "project/hive/warehouse"  # location of your Hive database in HDFS
+TEAM = 18
+WAREHOUSE = "project/hive/warehouse"  # location of your Hive database in HDFS
 
 spark: SparkSession = (
-    SparkSession.builder.appName("{} - spark ML".format(team))
+    SparkSession.builder.appName(f"{TEAM} - spark ML")
     # .master("yarn")
     # hive
     # .config("hive.metastore.uris", "thrift://hadoop-02.uni.innopolis.ru:9883")
-    # .config("spark.sql.warehouse.dir", warehouse)
+    # .config("spark.sql.warehouse.dir", WAREHOUSE)
     # .config("spark.sql.catalogImplementation", "hive")
     # .config("spark.sql.avro.compression.codec", "snappy")
     # .enableHiveSupport()
@@ -42,8 +45,8 @@ spark: SparkSession = (
     # .config("spark.executor.memory", "4g")  # '3g'
     # .config("spark.executors.instances", 3)
     # .config("spark.executors.memoryOverhead", "1g")  # '1g'
-    .config("spark.submit.deploymode", "client").config("spark.log.level", "WARN")
-    # .config("spark.jars.packages", "ai.catboost:catboost-spark_3.5_2.12")
+    .config("spark.submit.deploymode", "client")
+    .config("spark.log.level", "WARN")
     .getOrCreate()
 )
 
@@ -104,10 +107,6 @@ categorical_assembler = VectorAssembler(
 
 
 # datetime
-from pyspark.ml.param.shared import HasOutputCols, Param, Params
-from pyspark.ml.util import DefaultParamsReadable, DefaultParamsWritable
-
-
 class DateTimeTransformer(
     Transformer, HasOutputCols, DefaultParamsReadable, DefaultParamsWritable
 ):
@@ -167,7 +166,7 @@ num_assembler = VectorAssembler(
         # "year",
         "passenger_count",
         "trip_distance",
-        # ...
+        # less informative
         "extra",
         "mta_tax",
         "tip_amount",
@@ -244,91 +243,109 @@ r2_evaluator = RegressionEvaluator(metricName="r2", labelCol="fare_amount")
 ###########################
 # Linear Regression Model #
 ###########################
-if False:
-    lr_param_grid = (
-        ParamGridBuilder()
-        .addGrid(lr.regParam, [0.0, 0.01, 0.1, 1])
-        .addGrid(lr.elasticNetParam, [0.0, 0.25, 0.5, 0.75, 1.0])
-        # .addGrid(lr.epsilon, [1.10, 1.2, 1.3, 1.4, 1.5])  # use only with huber loss
-        .build()
-    )
-    cv = CrossValidator(
-        estimator=lr_pipeline,
-        estimatorParamMaps=lr_param_grid,
-        evaluator=rmse_evaluator,
-        numFolds=3,
-    )
-    cv_model = cv.fit(train_df)
-    best_model_lr = cv_model.bestModel
-    print("regParam: ", best_model_lr.stages[-1]._java_obj.getRegParam())
-    print("elasticNetParam: ", best_model_lr.stages[-1]._java_obj.getElasticNetParam())
+lr_param_grid = (
+    ParamGridBuilder()
+    .addGrid(lr.regParam, [0.01, 0.1, 1])
+    .addGrid(lr.elasticNetParam, [0.0, 0.5, 1.0])
+    # .addGrid(lr.epsilon, [1.10, 1.2, 1.3, 1.4, 1.5])  # use only with huber loss
+    .build()
+)
+cv = CrossValidator(
+    estimator=lr_pipeline,
+    estimatorParamMaps=lr_param_grid,
+    evaluator=rmse_evaluator,
+    numFolds=3,
+)
+cv_model = cv.fit(train_df)
+best_model_lr = cv_model.bestModel
 
-    # Save the best model
-    best_model_lr.write().overwrite().save("project/models/model1")
+# save the best lr
+best_model_lr.write().overwrite().save("project/models/model1")
 
-    # Predict and save results
-    predictions_lr = best_model_lr.transform(test_df)
-    predictions_lr.select("fare_amount", "prediction").repartition(1).write.mode(
-        "overwrite"
-    ).csv("project/output/model1_predictions")
+# Predict and save results
+predictions_lr = best_model_lr.transform(test_df)
+predictions_lr.select("fare_amount", "prediction").repartition(1).write.mode(
+    "overwrite"
+).csv("project/output/model1_predictions", header=True)
 
-    rmse_lr = rmse_evaluator.evaluate(predictions_lr)
-    r2_lr = r2_evaluator.evaluate(predictions_lr)
+rmse_lr = rmse_evaluator.evaluate(predictions_lr)
+r2_lr = r2_evaluator.evaluate(predictions_lr)
 
-    print("rmse: ", rmse_lr)
-    print("r2: ", r2_lr)
+print("rmse: ", rmse_lr)
+print("r2: ", r2_lr)
 
 #################
 # Random Forest #
 #################
-if True:
-    rf_param_grid = (
-        ParamGridBuilder()
-        .addGrid(rf.numTrees, [25])
-        .addGrid(rf.maxDepth, [5, 7])
-        # .addGrid(rf.numTrees, [25, 50, 75])
-        # .addGrid(rf.maxDepth, [5, 7, 9])
-        .build()
-    )
-    cv = CrossValidator(
-        estimator=rf_pipeline,
-        estimatorParamMaps=rf_param_grid,
-        evaluator=rmse_evaluator,
-        numFolds=3,
-    )
-    cv_model = cv.fit(train_df)
-    best_model_rf = cv_model.bestModel
+rf_param_grid = (
+    ParamGridBuilder()
+    .addGrid(rf.numTrees, [25, 50, 75])
+    .addGrid(rf.maxDepth, [5, 7, 9])
+    .build()
+)
+cv = CrossValidator(
+    estimator=rf_pipeline,
+    estimatorParamMaps=rf_param_grid,
+    evaluator=rmse_evaluator,
+    numFolds=3,
+)
+cv_model = cv.fit(train_df)
+best_model_rf = cv_model.bestModel
 
-    os.makedirs("project/output", exist_ok=True)
-    with open("project/output/best_params_model2.txt", "w") as f:
-        f.write("params:\n")
-        for k, v in best_model_rf.stages[-1].extractParamMap().items():
-            if k.name in {"numTrees", "maxDepth"}:
-                f.write(f"{k.name}: {v}\n")
+# Save the best model
+best_model_rf.write().overwrite().save("project/models/model2")
 
-    # Save the best model
-    best_model_rf.write().overwrite().save("project/models/model2")
+# Predict and save results
+predictions_rf = best_model_rf.transform(test_df)
+predictions_rf.select("fare_amount", "prediction").repartition(1).write.mode(
+    "overwrite"
+).csv("project/output/model2_predictions", header=True)
 
-    # Predict and save results
-    predictions_rf = best_model_rf.transform(test_df)
-    predictions_rf.select("fare_amount", "prediction").repartition(1).write.mode(
-        "overwrite"
-    ).csv("project/output/model2_predictions")
+rmse_rf = rmse_evaluator.evaluate(predictions_rf)
+r2_rf = r2_evaluator.evaluate(predictions_rf)
 
-    rmse_lr = rmse_evaluator.evaluate(predictions_rf)
-    r2_lr = r2_evaluator.evaluate(predictions_rf)
+print("rmse: ", rmse_rf)
+print("r2: ", r2_rf)
 
-    with open("project/output/metrics2.txt", "w") as f:
-        f.write(f"rmse: {rmse_lr}\n")
-        f.write(f"r2: {r2_lr}\n")
+##################
+# COMPARE MODELS #
+##################
+# rmse_lr, r2_lr = 5.0, 0.75
+# best_model_lr = lr_pipeline.fit(train_df)
 
-    print("rmse: ", rmse_lr)
-    print("r2: ", r2_lr)
+# rmse_rf, r2_rf = 4.4, 0.78
+# best_model_rf = rf_pipeline.fit(train_df)
 
+model_lr = f"LinearRegression(regParam={best_model_lr.stages[-1]._java_obj.getRegParam()}, elasticNetParam={best_model_lr.stages[-1]._java_obj.getElasticNetParam()})"  # f"LinearRegression(regParam={best_model_lr.stages[-1].extractParamMap()['regParam']}, elasticNetParam={best_model_lr.stages[-1].extractParamMap()['elasticNetParam']})"
+model_rf = f"RandomForestRegressor(maxDepth={best_model_rf.stages[-1]._java_obj.getMaxDepth()}, numTrees={best_model_rf.stages[-1]._java_obj.getNumTrees()})"  # f"RandomForestRegressor(maxDepth={best_model_rf.stages[-1].maxDepth}, numTrees={best_model_rf.stages[-1].numTrees})"
+
+models = [[model_lr, rmse_lr, r2_lr], [model_rf, rmse_rf, r2_rf]]
+models_df = spark.createDataFrame(models, ["model", "RMSE", "R2"])
+models_df.show(truncate=False)
+
+models_df.coalesce(1).write.mode("overwrite").format("csv").option("sep", ",").option(
+    "header", "true"
+).save("project/output/evaluation", format="csv")
 
 end_time = time.time()
 elapsed_time = end_time - start_time
 print(f"Time elapsed: {elapsed_time:.2f} seconds")
 
-
 spark.stop()
+
+
+# ⢀⡴⠑⡄⠀⠀⠀⠀⠀⠀⠀⣀⣀⣤⣤⣤⣀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+# ⠸⡇⠀⠿⡀⠀⠀⠀⣀⡴⢿⣿⣿⣿⣿⣿⣿⣿⣷⣦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+# ⠀⠀⠀⠀⠑⢄⣠⠾⠁⣀⣄⡈⠙⣿⣿⣿⣿⣿⣿⣿⣿⣆⠀⠀⠀⠀⠀⠀⠀⠀
+# ⠀⠀⠀⠀⢀⡀⠁⠀⠀⠈⠙⠛⠂⠈⣿⣿⣿⣿⣿⠿⡿⢿⣆⠀⠀⠀⠀⠀⠀⠀
+# ⠀⠀⠀⢀⡾⣁⣀⠀⠴⠂⠙⣗⡀⠀⢻⣿⣿⠭⢤⣴⣦⣤⣹⠀⠀⠀⢀⢴⣶⣆
+# ⠀⠀⢀⣾⣿⣿⣿⣷⣮⣽⣾⣿⣥⣴⣿⣿⡿⢂⠔⢚⡿⢿⣿⣦⣴⣾⠁⠸⣼⡿
+# ⠀⢀⡞⠁⠙⠻⠿⠟⠉⠀⠛⢹⣿⣿⣿⣿⣿⣌⢤⣼⣿⣾⣿⡟⠉⠀⠀⠀⠀⠀
+# ⠀⣾⣷⣶⠇⠀⠀⣤⣄⣀⡀⠈⠻⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡇⠀⠀⠀⠀⠀⠀
+# ⠀⠉⠈⠉⠀⠀⢦⡈⢻⣿⣿⣿⣶⣶⣶⣶⣤⣽⡹⣿⣿⣿⣿⡇⠀⠀⠀⠀⠀⠀
+# ⠀⠀⠀⠀⠀⠀⠀⠉⠲⣽⡻⢿⣿⣿⣿⣿⣿⣿⣷⣜⣿⣿⣿⡇⠀⠀⠀⠀⠀⠀
+# ⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⣷⣶⣮⣭⣽⣿⣿⣿⣿⣿⣿⣿⠀⠀⠀⠀⠀⠀⠀
+# ⠀⠀⠀⠀⠀⠀⣀⣀⣈⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠇⠀⠀⠀⠀⠀⠀⠀
+# ⠀⠀⠀⠀⠀⠀⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠃⠀⠀⠀⠀⠀⠀⠀⠀
+# ⠀⠀⠀⠀⠀⠀⠀⠹⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠟⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀
+# ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⠛⠻⠿⠿⠿⠿⠛⠉
