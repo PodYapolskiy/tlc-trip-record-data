@@ -57,7 +57,7 @@ Unfortunately, during a long period of time (10 years from 2014 to 2024) it is n
 - Polars Relaxed dataframe Concatenation (succeeded but can be executed only on a single node)
 - Spark distributed dataframe conversion + merge as separate jobs (succeeded, our final solution)
 
-You can read more about dataset transformation in the corresponding [stage01](./stage01/readme.md) section, or you can either explore polars approach in the [stage01/merge](./stage01/merge/readme.md) script description, or you can go directly to the [stage01/dataloader/readme.md] spark implementation.
+You can read more about dataset transformation in the corresponding [stage01](./stage01/readme.md) section, or you can either explore polars approach in the [stage01/merge](./stage01/merge/readme.md) script description, or you can go directly to the [stage01/dataloader/readme.md](spark implementation).
 
 ### Dataset Partitioning and Loading
 
