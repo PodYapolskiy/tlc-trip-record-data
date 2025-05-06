@@ -29,13 +29,13 @@ WAREHOUSE = "project/hive/warehouse"  # location of your Hive database in HDFS
 
 spark: SparkSession = (
     SparkSession.builder.appName(f"{TEAM} - spark ML")
-    # .master("yarn")
+    .master("yarn")
     # hive
-    # .config("hive.metastore.uris", "thrift://hadoop-02.uni.innopolis.ru:9883")
-    # .config("spark.sql.warehouse.dir", WAREHOUSE)
-    # .config("spark.sql.catalogImplementation", "hive")
-    # .config("spark.sql.avro.compression.codec", "snappy")
-    # .enableHiveSupport()
+    .config("hive.metastore.uris", "thrift://hadoop-02.uni.innopolis.ru:9883")
+    .config("spark.sql.warehouse.dir", WAREHOUSE)
+    .config("spark.sql.catalogImplementation", "hive")
+    .config("spark.sql.avro.compression.codec", "snappy")
+    .enableHiveSupport()
     # driver
     # .config("spark.driver.cores", 2)
     # .config("spark.driver.memory", "2g")  # '2g'
@@ -45,16 +45,22 @@ spark: SparkSession = (
     # .config("spark.executor.memory", "4g")  # '3g'
     # .config("spark.executors.instances", 3)
     # .config("spark.executors.memoryOverhead", "1g")  # '1g'
-    .config("spark.submit.deploymode", "client")
-    .config("spark.log.level", "WARN")
+    # .config("spark.submit.deploymode", "client")
+    # .config("spark.log.level", "WARN")
     .getOrCreate()
 )
 
 
+# df = (
+#     spark.read.format("avro").option("avroCompressionCodec", "snappy").load("./0000*_0")
+# )
 df = (
-    spark.read.format("avro").option("avroCompressionCodec", "snappy").load("./0000*_0")
+    spark.read.format("avro")
+    # .option("avroCompressionCodec", "snappy")
+    .table("team18_projectdb.green_tripdata_monthly")
 )
 
+# df = spark.sql("SELECT * FROM team18_projectdb.green_tripdata_monthly")
 
 # df.show(1, vertical=True, truncate=False)
 # df.groupBy("trip_type").count().show()

@@ -9,15 +9,15 @@ if [ $? -ne 0 ]; then
 fi
 
 spark-submit \
-    --packages org.apache.hadoop:hadoop-aws:3.4.1 \
-    --packages org.apache.spark:spark-avro_2.12:3.5.1 \
-    --driver-memory 4g \
-    --num-executors 3 \
-    --executor-memory 8g \
+    --master yarn \
+    --driver-memory 1g \
+    --num-executors 2 \
+    --executor-memory 1g \
     --executor-cores 5 \
+    --packages org.apache.spark:spark-avro_2.12:3.5.1 \
     $SCRIPTS/stage03/main.py
-    # --master yarn \
     # --packages ai.catboost:catboost-spark_3.5_2.12 \
+    # --packages org.apache.hadoop:hadoop-aws:3.4.1 \
 
 if [ $? -eq 1 ]; then
     echo "Stage 3 failed."
