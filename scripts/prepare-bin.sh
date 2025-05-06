@@ -52,11 +52,20 @@ if [ -f "$BIN/sbt" ]; then
     log "File $BIN/sbt exists"
 else
     log "downloading coursier to setup scala"
-    curl -fL https://github.com/coursier/coursier/releases/latest/download/cs-x86_64-pc-linux.gz | gzip -d > cs && chmod +x cs && ./cs setup -y
+    curl -fL https://github.com/coursier/coursier/releases/latest/download/cs-x86_64-pc-linux.gz | gzip -d >cs && chmod +x cs && ./cs setup -y
     log "removing coursier"
     rm cs
     log "copying files to bin folder"
     cp ~/.local/share/coursier/bin/* $BIN/
+fi
+
+if [ -f "$BIN/avro-tools.jar" ]; then
+    log "File $BIN/avro-tools.jar exists"
+else
+    log "Downloading avro-tools"
+    wget https://repo1.maven.org/maven2/org/apache/avro/avro-tools/1.11.3/avro-tools-1.11.3.jar -O $BIN/avro-tools.jar
+
+    log "avro-tools downloaded to $BIN/avro-tools.jar"
 fi
 
 log "loaded binaries: $(ls $BIN/)"

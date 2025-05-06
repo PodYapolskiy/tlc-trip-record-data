@@ -44,11 +44,11 @@ $BIN/uv run "$SCRIPTS/stage01/download/download_sources.py" \
     --max-concurrent 12
 
 log "Setting up $HDFS_ROOT/project/"
-hdfs dfs -rm -r -f $HDFS_ROOT/project/rawdata
+hdfs dfs -rm -r -f -skipTrash $HDFS_ROOT/project/rawdata
 hdfs dfs -mkdir -p $HDFS_ROOT/project/rawdata
 hdfs dfs -mkdir -p $HDFS_ROOT/project/merged
 hdfs dfs -put $DATA $HDFS_ROOT/project/rawdata
-hdfs dfs -rm -r -f $HDFS_ROOT/project/warehouse
+hdfs dfs -rm -r -f -skipTrash $HDFS_ROOT/project/warehouse
 hdfs dfs -mkdir -p $HDFS_ROOT/project/warehouse
 
 log "Creating tables in PostgreSQL"
@@ -81,12 +81,16 @@ spark-submit \
     --source "/user/$TEAMNAME/project/rawdata/data" \
     --merged "/user/$TEAMNAME/project/data"
 
+log "cleaning raw data"
+hdfs dfs -rm -r -f -skipTrash $HDFS_ROOT/project/rawdata
+
 log "Loading data from PostgreSQL to cluster using scoop"
 sqoop import \
     --connect jdbc:postgresql://$POSTGRES_HOST:$POSTGRES_PORT/$POSTGRES_DATABASE \
     --username $POSTGRES_USERNAME \
     --password $POSTGRES_PASSWORD \
     --table green_tripdata \
+    --as-avrodatafile \
     --compression-codec=snappy \
     --compress \
     --warehouse-dir=$HDFS_ROOT/project/warehouse \

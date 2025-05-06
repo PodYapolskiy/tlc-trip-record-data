@@ -2,3 +2,8 @@ pylint
 pyspark
 pandas
 streamlit
+jinja2
+psycopg-binary
+httpx
+pyarrow
+polars
