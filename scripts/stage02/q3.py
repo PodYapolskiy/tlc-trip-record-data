@@ -1,4 +1,9 @@
-from functools import reduce
+""" Module for calculating correlation between:
+- price and duration
+- price and distance
+- price and passenger count """
+
+from functools import (reduce)
 from pyspark.sql import SparkSession
 import pyspark.sql.functions as F
 
