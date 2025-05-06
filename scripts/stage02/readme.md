@@ -1,5 +1,17 @@
 # `[stage02]`
 
+- [`[stage02]`](#stage02)
+  - [File Structure](#file-structure)
+  - [Prepare data and Hive dataset](#prepare-data-and-hive-dataset)
+  - [Create queries](#create-queries)
+    - [Calculate missing values percentage](#calculate-missing-values-percentage)
+    - [Calculate invalid rows percentage](#calculate-invalid-rows-percentage)
+    - [Calculate correlations between price and other features](#calculate-correlations-between-price-and-other-features)
+    - [Create table with duration](#create-table-with-duration)
+    - [Create table with pick-up hour and drop-off hour](#create-table-with-pick-up-hour-and-drop-off-hour)
+    - [Create table with pick-up and drop-off locations and average price](#create-table-with-pick-up-and-drop-off-locations-and-average-price)
+  - [Add queries to dashboard](#add-queries-to-dashboard)
+
 This stage is responsible for performing the Exploratory Data Analysis.
 
 ## File Structure
