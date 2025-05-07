@@ -1,3 +1,5 @@
+""" Module for creating table with average price based on pick up and drop-off locations"""
+
 from functools import reduce
 from pyspark.sql import SparkSession
 import pyspark.sql.functions as F

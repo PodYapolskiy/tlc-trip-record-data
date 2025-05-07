@@ -1,3 +1,5 @@
+""" Module for creating a filtered table with cleaned data"""
+
 from datetime import datetime
 from functools import reduce
 from pyspark.sql import SparkSession

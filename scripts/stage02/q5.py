@@ -1,3 +1,5 @@
+""" Module for creating table with price, pickup hour and drop-off hour"""
+
 from functools import reduce
 from pyspark.sql import SparkSession
 import pyspark.sql.functions as F
