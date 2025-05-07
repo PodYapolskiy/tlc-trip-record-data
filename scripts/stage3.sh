@@ -8,6 +8,9 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
+hdfs dfs -mkdir -p $HDFS_ROOT/project/output
+hdfs dfs -mkdir -p $HDFS_ROOT/project/models
+
 spark-submit \
     --master yarn \
     --driver-memory 2g \

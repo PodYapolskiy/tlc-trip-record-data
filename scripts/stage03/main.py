@@ -62,7 +62,7 @@ spark: SparkSession = (
 # )
 
 df = spark.sql("SELECT * FROM team18_projectdb.green_tripdata_monthly").sample(
-    fraction=0.01, seed=42
+    fraction=0.01 * 0.1, seed=42
 )
 
 # Handle null for encoding
@@ -77,8 +77,8 @@ df = df.fillna(
 # SPLIT #
 #########
 train_df, test_df = df.randomSplit([0.8, 0.2], seed=42)
-train_df.repartition(1).write.mode("ignore").json("project/data/train")
-test_df.repartition(1).write.mode("ignore").json("project/data/test")
+train_df.write.mode("overwrite").json("project/data/train")
+test_df.write.mode("overwrite").json("project/data/test")
 
 #################
 # PREPROCESSING #
@@ -324,6 +324,8 @@ r2_rf = r2_evaluator.evaluate(predictions_rf)
 print("rmse: ", rmse_rf)
 print("r2: ", r2_rf)
 
+rf_metrics = Row(rmse=rmse_lr, r2=r2_lr)
+
 ###############################
 # Gradient Boosting Regressor #
 ###############################
@@ -345,12 +347,17 @@ predictions_gb = best_model_gb.transform(test_df)
 predictions_gb.select("fare_amount", "prediction").write.mode("overwrite").csv(
     "project/output/model3_predictions", header=True
 )
+predictions_gb.write.mode("overwrite").saveAsTable(
+    "team18_projectdb.gradient_boosting_prediction"
+)
 
 rmse_gb = rmse_evaluator.evaluate(predictions_gb)
 r2_gb = r2_evaluator.evaluate(predictions_gb)
 
 print("rmse: ", rmse_gb)
 print("r2: ", r2_gb)
+
+gb_metrics = Row(rmse=rmse_gb, r2=r2_gb)
 
 ##################
 # COMPARE MODELS #
@@ -372,9 +379,10 @@ models_df.coalesce(1).write.mode("overwrite").format("csv").option("sep", ",").o
 ).save("project/output/evaluation", format="csv")
 models_df.write.mode("overwrite").saveAsTable("team18_projectdb.evaluation")
 
-spark.createDataFrame([lr_metrics, rf_metrics]).write.mode("overwrite").saveAsTable(
-    "team18_projectdb.metrics"
-)
+# models_df.write.mode("overwrite").saveAsTable("team18_projectdb.evaluation")
+spark.createDataFrame([lr_metrics, rf_metrics, gb_metrics]).write.mode(
+    "overwrite"
+).saveAsTable("team18_projectdb.metrics")
 
 end_time = time.time()
 elapsed_time = end_time - start_time
