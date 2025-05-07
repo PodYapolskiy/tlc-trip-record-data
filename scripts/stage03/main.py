@@ -3,12 +3,13 @@ Stage 3
 """
 
 import time
+import math
 
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
 from pyspark.sql.dataframe import DataFrame
 from pyspark.ml import Pipeline
-from pyspark.ml.regression import LinearRegression, RandomForestRegressor
+from pyspark.ml.regression import LinearRegression, RandomForestRegressor, GBTRegressor
 from pyspark.ml.tuning import ParamGridBuilder, CrossValidator
 from pyspark.ml.evaluation import RegressionEvaluator
 from pyspark.ml.base import Transformer
@@ -16,7 +17,6 @@ from pyspark.sql import Row
 from pyspark.ml.param.shared import HasOutputCols
 from pyspark.ml.util import DefaultParamsReadable, DefaultParamsWritable
 from pyspark.ml.feature import (
-    StringIndexer,
     OneHotEncoder,
     VectorAssembler,
     StandardScaler,
@@ -55,51 +55,44 @@ spark: SparkSession = (
 # df = (
 #     spark.read.format("avro").option("avroCompressionCodec", "snappy").load("./0000*_0")
 # )
-df = (
-    spark.read.format("avro")
-    # .option("avroCompressionCodec", "snappy")
-    .table("team18_projectdb.green_tripdata_monthly")
+# df = (
+#     spark.read.format("avro")
+#     # .option("avroCompressionCodec", "snappy")
+#     .table("team18_projectdb.green_tripdata_monthly")
+# )
+
+df = spark.sql("SELECT * FROM team18_projectdb.green_tripdata_monthly").sample(
+    fraction=0.01 * 0.1, seed=42
 )
 
-# df = spark.sql("SELECT * FROM team18_projectdb.green_tripdata_monthly")
-
-# df.show(1, vertical=True, truncate=False)
-# df.groupBy("trip_type").count().show()
-# spark.stop()
-# import sys
-# sys.exit(0)
+# Handle null for encoding
+# Compute a safe placeholder (e.g., max value + 1)
+max_value = df.agg({"ratecodeid": "max"}).collect()[0][0]
+placeholder = max_value + 1 if max_value is not None else 0
+df = df.fillna(
+    placeholder, subset=["vendorid", "ratecodeid", "payment_type", "trip_type"]
+)
 
 #########
 # SPLIT #
 #########
 train_df, test_df = df.randomSplit([0.8, 0.2], seed=42)
-train_df.repartition(1).write.mode("ignore").json("project/data/train")
-test_df.repartition(1).write.mode("ignore").json("project/data/test")
+train_df.write.mode("overwrite").json("project/data/train")
+test_df.write.mode("overwrite").json("project/data/test")
 
 #################
 # PREPROCESSING #
 #################
 # categorical
-vendor_indexer = StringIndexer(
-    inputCol="vendorid", outputCol="vendor_index", handleInvalid="skip"
-)
-ratecode_indexer = StringIndexer(
-    inputCol="ratecodeid", outputCol="ratecode_index", handleInvalid="skip"
-)
-payment_indexer = StringIndexer(
-    inputCol="payment_type", outputCol="payment_index", handleInvalid="skip"
-)
-trip_indexer = StringIndexer(
-    inputCol="trip_type", outputCol="trip_index", handleInvalid="skip"
-)
 encoder = OneHotEncoder(
-    inputCols=["vendor_index", "ratecode_index", "payment_index", "trip_index"],
+    inputCols=["vendorid", "ratecodeid", "payment_type", "trip_type"],
     outputCols=[
         "vendor_encoded",
         "ratecode_encoded",
         "payment_encoded",
         "trip_encoded",
     ],
+    handleInvalid="keep",
 )
 categorical_assembler = VectorAssembler(
     inputCols=[
@@ -122,25 +115,25 @@ class DateTimeTransformer(
             df.withColumn("year", F.year("lpep_pickup_datetime"))
             # month [1, 12]
             .withColumn("month", F.month("lpep_pickup_datetime"))
-            .withColumn("month_sin", F.sin(2 * F.pi() * F.col("month") / 12))
-            .withColumn("month_cos", F.cos(2 * F.pi() * F.col("month") / 12))
+            .withColumn("month_sin", F.sin(2 * math.pi * F.col("month") / 12))
+            .withColumn("month_cos", F.cos(2 * math.pi * F.col("month") / 12))
             # .withColumn("month_day", F.dayofmonth("lpep_pickup_datetime"))
             # week day [1, 7]
             .withColumn("week_day", F.dayofweek("lpep_pickup_datetime"))
-            .withColumn("week_day_sin", F.sin(2 * F.pi() * F.col("week_day") / 7))
-            .withColumn("week_day_cos", F.cos(2 * F.pi() * F.col("week_day") / 7))
+            .withColumn("week_day_sin", F.sin(2 * math.pi * F.col("week_day") / 7))
+            .withColumn("week_day_cos", F.cos(2 * math.pi * F.col("week_day") / 7))
             # hour [0, 23]
             .withColumn("hour", F.hour("lpep_pickup_datetime"))
-            .withColumn("hour_sin", F.sin(2 * F.pi() * F.col("hour") / 24))
-            .withColumn("hour_cos", F.cos(2 * F.pi() * F.col("hour") / 24))
+            .withColumn("hour_sin", F.sin(2 * math.pi * F.col("hour") / 24))
+            .withColumn("hour_cos", F.cos(2 * math.pi * F.col("hour") / 24))
             # minute [0, 59]
             .withColumn("minute", F.minute("lpep_pickup_datetime"))
-            .withColumn("minute_sin", F.sin(2 * F.pi() * F.col("minute") / 60))
-            .withColumn("minute_cos", F.cos(2 * F.pi() * F.col("minute") / 60))
+            .withColumn("minute_sin", F.sin(2 * math.pi * F.col("minute") / 60))
+            .withColumn("minute_cos", F.cos(2 * math.pi * F.col("minute") / 60))
             # second [0, 59]
             .withColumn("second", F.second("lpep_pickup_datetime"))
-            .withColumn("second_sin", F.sin(2 * F.pi() * F.col("second") / 60))
-            .withColumn("second_cos", F.cos(2 * F.pi() * F.col("second") / 60))
+            .withColumn("second_sin", F.sin(2 * math.pi * F.col("second") / 60))
+            .withColumn("second_cos", F.cos(2 * math.pi * F.col("second") / 60))
             # .withColumn(
             #     "trip_time",
             #     F.col("lpep_dropoff_datetime").cast("long")
@@ -205,10 +198,6 @@ lr = LinearRegression(
 lr_pipeline = Pipeline(
     stages=[
         # categorical
-        vendor_indexer,
-        ratecode_indexer,
-        payment_indexer,
-        trip_indexer,
         encoder,  # one hot encode
         categorical_assembler,
         # time
@@ -226,10 +215,6 @@ rf = RandomForestRegressor(featuresCol="features", labelCol="fare_amount", seed=
 rf_pipeline = Pipeline(
     stages=[
         # categorical
-        vendor_indexer,
-        ratecode_indexer,
-        payment_indexer,
-        trip_indexer,
         encoder,  # one hot encode
         categorical_assembler,
         # time
@@ -241,6 +226,23 @@ rf_pipeline = Pipeline(
         # final assembler and model
         final_assembler,
         rf,
+    ]
+)
+gb = GBTRegressor(featuresCol="features", labelCol="fare_amount", seed=42)
+gb_pipeline = Pipeline(
+    stages=[
+        # categorical
+        encoder,  # one hot encode
+        categorical_assembler,
+        # time
+        date_time_trasformer,
+        time_decomposer,
+        # numerical
+        num_assembler,
+        scaler,
+        # final assembler and model
+        final_assembler,
+        gb,
     ]
 )
 
@@ -324,19 +326,51 @@ print("r2: ", r2_rf)
 
 rf_metrics = Row(rmse=rmse_rf, r2=r2_rf)
 
+###############################
+# Gradient Boosting Regressor #
+###############################
+gb_param_grid = ParamGridBuilder().addGrid(gb.maxDepth, [3, 5, 7]).build()
+cv = CrossValidator(
+    estimator=gb_pipeline,
+    estimatorParamMaps=gb_param_grid,
+    evaluator=rmse_evaluator,
+    numFolds=3,
+)
+cv_model = cv.fit(train_df)
+best_model_gb = cv_model.bestModel
+
+# save the best lr
+best_model_gb.write().overwrite().save("project/models/model3")
+
+# Predict and save results
+predictions_gb = best_model_gb.transform(test_df)
+predictions_gb.select("fare_amount", "prediction").write.mode("overwrite").csv(
+    "project/output/model3_predictions", header=True
+)
+predictions_gb.write.mode("overwrite").saveAsTable(
+    "team18_projectdb.gradient_boosting_prediction"
+)
+
+rmse_gb = rmse_evaluator.evaluate(predictions_gb)
+r2_gb = r2_evaluator.evaluate(predictions_gb)
+
+print("rmse: ", rmse_gb)
+print("r2: ", r2_gb)
+
+gb_metrics = Row(rmse=rmse_gb, r2=r2_gb)
+
 ##################
 # COMPARE MODELS #
 ##################
-# rmse_lr, r2_lr = 5.0, 0.75
-# best_model_lr = lr_pipeline.fit(train_df)
+model_lr = f"LinearRegression(regParam={best_model_lr.stages[-1]._java_obj.getRegParam()}, elasticNetParam={best_model_lr.stages[-1]._java_obj.getElasticNetParam()})"
+model_rf = f"RandomForestRegressor(maxDepth={best_model_rf.stages[-1]._java_obj.getMaxDepth()}, numTrees={best_model_rf.stages[-1]._java_obj.getNumTrees()})"
+model_gb = f"GradientBoostingRegressor(maxDepth={best_model_gb.stages[-1]._java_obj.getMaxDepth()})"
 
-# rmse_rf, r2_rf = 4.4, 0.78
-# best_model_rf = rf_pipeline.fit(train_df)
-
-model_lr = f"LinearRegression(regParam={best_model_lr.stages[-1]._java_obj.getRegParam()}, elasticNetParam={best_model_lr.stages[-1]._java_obj.getElasticNetParam()})"  # f"LinearRegression(regParam={best_model_lr.stages[-1].extractParamMap()['regParam']}, elasticNetParam={best_model_lr.stages[-1].extractParamMap()['elasticNetParam']})"
-model_rf = f"RandomForestRegressor(maxDepth={best_model_rf.stages[-1]._java_obj.getMaxDepth()}, numTrees={best_model_rf.stages[-1]._java_obj.getNumTrees()})"  # f"RandomForestRegressor(maxDepth={best_model_rf.stages[-1].maxDepth}, numTrees={best_model_rf.stages[-1].numTrees})"
-
-models = [[model_lr, rmse_lr, r2_lr], [model_rf, rmse_rf, r2_rf]]
+models = [
+    [model_lr, rmse_lr, r2_lr],
+    [model_rf, rmse_rf, r2_rf],
+    [model_gb, rmse_gb, r2_gb],
+]
 models_df = spark.createDataFrame(models, ["model", "RMSE", "R2"])
 models_df.show(truncate=False)
 
@@ -345,9 +379,10 @@ models_df.coalesce(1).write.mode("overwrite").format("csv").option("sep", ",").o
 ).save("project/output/evaluation", format="csv")
 models_df.write.mode("overwrite").saveAsTable("team18_projectdb.evaluation")
 
-spark.createDataFrame([lr_metrics, rf_metrics]).write.mode("overwrite").saveAsTable(
-    "team18_projectdb.metrics"
-)
+# models_df.write.mode("overwrite").saveAsTable("team18_projectdb.evaluation")
+spark.createDataFrame([lr_metrics, rf_metrics, gb_metrics]).write.mode(
+    "overwrite"
+).saveAsTable("team18_projectdb.metrics")
 
 end_time = time.time()
 elapsed_time = end_time - start_time
