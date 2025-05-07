@@ -12,6 +12,7 @@ from pyspark.ml.regression import LinearRegression, RandomForestRegressor
 from pyspark.ml.tuning import ParamGridBuilder, CrossValidator
 from pyspark.ml.evaluation import RegressionEvaluator
 from pyspark.ml.base import Transformer
+from pyspark.sql import Row
 from pyspark.ml.param.shared import HasOutputCols
 from pyspark.ml.util import DefaultParamsReadable, DefaultParamsWritable
 from pyspark.ml.feature import (
@@ -271,14 +272,19 @@ best_model_lr.write().overwrite().save("project/models/model1")
 # Predict and save results
 predictions_lr = best_model_lr.transform(test_df)
 predictions_lr.select("fare_amount", "prediction").repartition(1).write.mode(
-    "overwrite"
+    saveMode="overwrite"
 ).csv("project/output/model1_predictions", header=True)
+predictions_lr.write.mode("overwrite").saveAsTable(
+    "team18_projectdb.linear_regression_prediction"
+)
 
 rmse_lr = rmse_evaluator.evaluate(predictions_lr)
 r2_lr = r2_evaluator.evaluate(predictions_lr)
 
 print("rmse: ", rmse_lr)
 print("r2: ", r2_lr)
+
+lr_metrics = Row(rmse=rmse_lr, r2=r2_lr)
 
 #################
 # Random Forest #
@@ -306,12 +312,17 @@ predictions_rf = best_model_rf.transform(test_df)
 predictions_rf.select("fare_amount", "prediction").repartition(1).write.mode(
     "overwrite"
 ).csv("project/output/model2_predictions", header=True)
+predictions_rf.write.mode("overwrite").saveAsTable(
+    "team18_projectdb.random_forest_prediction"
+)
 
 rmse_rf = rmse_evaluator.evaluate(predictions_rf)
 r2_rf = r2_evaluator.evaluate(predictions_rf)
 
 print("rmse: ", rmse_rf)
 print("r2: ", r2_rf)
+
+rf_metrics = Row(rmse=rmse_rf, r2=r2_rf)
 
 ##################
 # COMPARE MODELS #
@@ -332,6 +343,11 @@ models_df.show(truncate=False)
 models_df.coalesce(1).write.mode("overwrite").format("csv").option("sep", ",").option(
     "header", "true"
 ).save("project/output/evaluation", format="csv")
+models_df.write.mode("overwrite").saveAsTable("team18_projectdb.evaluation")
+
+spark.createDataFrame([lr_metrics, rf_metrics]).write.mode("overwrite").saveAsTable(
+    "team18_projectdb.metrics"
+)
 
 end_time = time.time()
 elapsed_time = end_time - start_time
