@@ -56,15 +56,13 @@ log "running q1"
 beeline -u jdbc:hive2://hadoop-03.uni.innopolis.ru:10001 -n team18 -p $HIVE_PASSWORD -f $PROJECT_ROOT/sql/q1.hql
 echo "column_name,null_count,null_percent" >$PROJECT_ROOT/output/q1_result.txt
 hdfs dfs -cat "${HDFS_ROOT}/project/hive/eda/q1_result/*" >>$PROJECT_ROOT/output/q1_result.txt
-cat $PROJECT_ROOT/output/q1_result.txt > $PROJECT_ROOT/output/q1.csv
-
+cp $PROJECT_ROOT/output/q1_result.txt $PROJECT_ROOT/output/q1.csv
 
 log "running q2"
 beeline -u jdbc:hive2://hadoop-03.uni.innopolis.ru:10001 -n team18 -p $HIVE_PASSWORD -f $PROJECT_ROOT/sql/q2.hql
 echo "invalid_count,invalid_percent" >$PROJECT_ROOT/output/q2_result.txt
 hdfs dfs -cat "${HDFS_ROOT}/project/hive/eda/q2_result/*" >>$PROJECT_ROOT/output/q2_result.txt
-cat $PROJECT_ROOT/output/q2_result.txt > $PROJECT_ROOT/output/q2.csv
-
+cp $PROJECT_ROOT/output/q2_result.txt $PROJECT_ROOT/output/q2.csv
 
 log "running q3"
 
@@ -85,8 +83,7 @@ spark-submit \
 
 echo "year,corr_duration_price,corr_distance_price" >$PROJECT_ROOT/output/q3_result.txt
 hdfs dfs -cat "${HDFS_ROOT}/project/hive/eda/q3_result/*" >>$PROJECT_ROOT/output/q3_result.txt
-cat $PROJECT_ROOT/output/q3_result.txt > $PROJECT_ROOT/output/q3.csv
-
+cp $PROJECT_ROOT/output/q3_result.txt $PROJECT_ROOT/output/q3.csv
 
 log "running q4"
 
@@ -98,7 +95,7 @@ spark-submit \
 
 echo "year,month,distance,price,passenger_count" >$PROJECT_ROOT/output/q4_result.txt
 hdfs dfs -cat "${HDFS_ROOT}/project/hive/eda/q4_result/*" >>$PROJECT_ROOT/output/q4_result.txt
-cat $PROJECT_ROOT/output/q4_result.txt > $PROJECT_ROOT/output/q4.csv
+cp $PROJECT_ROOT/output/q4_result.txt $PROJECT_ROOT/output/q4.csv
 
 log "running q5"
 
@@ -110,16 +107,17 @@ spark-submit \
 
 echo "price,pickup_hour,dropoff_hour" >$PROJECT_ROOT/output/q5_result.txt
 hdfs dfs -cat "${HDFS_ROOT}/project/hive/eda/q5_result/*" >>$PROJECT_ROOT/output/q5_result.txt
-cat $PROJECT_ROOT/output/q5_result.txt > $PROJECT_ROOT/output/q5.csv
+cp $PROJECT_ROOT/output/q5_result.txt $PROJECT_ROOT/output/q5.csv
 
-log "running q6"
+# this query is too heavy for cluster
+# log "running q6"
 
-spark-submit \
-    --master yarn \
-    --archives $BIN/.venv.tar.gz#.venv \
-    --deploy-mode cluster \
-    $SCRIPTS/stage02/q6.py
+# spark-submit \
+#     --master yarn \
+#     --archives $BIN/.venv.tar.gz#.venv \
+#     --deploy-mode cluster \
+#     $SCRIPTS/stage02/q6.py
 
-echo "price,pickup_location,dropoff_location" >$PROJECT_ROOT/output/q6_result.txt
-hdfs dfs -cat "${HDFS_ROOT}/project/hive/eda/q6_result/*" >>$PROJECT_ROOT/output/q6_result.txt
-cat $PROJECT_ROOT/output/q6_result.txt > $PROJECT_ROOT/output/q6.csv
+# echo "price,pickup_location,dropoff_location" >$PROJECT_ROOT/output/q6_result.txt
+# hdfs dfs -cat "${HDFS_ROOT}/project/hive/eda/q6_result/*" >>$PROJECT_ROOT/output/q6_result.txt
+# cp $PROJECT_ROOT/output/q6_result.txt > $PROJECT_ROOT/output/q6.csv
