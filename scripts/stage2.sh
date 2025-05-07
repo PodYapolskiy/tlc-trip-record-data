@@ -66,6 +66,7 @@ cp $PROJECT_ROOT/output/q2_result.txt $PROJECT_ROOT/output/q2.csv
 
 log "running q3"
 
+rm -rf $SCRIPTS/stage02/.venv
 python3 -m venv $SCRIPTS/stage02/.venv
 source $SCRIPTS/stage02/.venv/bin/activate
 pip install -r $SCRIPTS/stage02/requirements.txt

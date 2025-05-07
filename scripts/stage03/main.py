@@ -47,7 +47,7 @@ spark: SparkSession = (
     # .config("spark.executors.instances", 3)
     # .config("spark.executors.memoryOverhead", "1g")  # '1g'
     # .config("spark.submit.deploymode", "client")
-    # .config("spark.log.level", "WARN")
+    .config("spark.log.level", "DEBUG")
     .getOrCreate()
 )
 
@@ -55,15 +55,15 @@ spark: SparkSession = (
 # df = (
 #     spark.read.format("avro").option("avroCompressionCodec", "snappy").load("./0000*_0")
 # )
-# df = (
-#     spark.read.format("avro")
-#     # .option("avroCompressionCodec", "snappy")
-#     .table("team18_projectdb.green_tripdata_monthly")
-# )
-
-df = spark.sql("SELECT * FROM team18_projectdb.green_tripdata_monthly").sample(
-    fraction=0.01 * 0.1, seed=42
+df = (
+    spark.read.format("avro")
+    .option("avroCompressionCodec", "snappy")
+    .table("team18_projectdb.green_tripdata_monthly")
 )
+
+# df = spark.sql("SELECT * FROM team18_projectdb.green_tripdata_monthly")
+
+df = df.sample(fraction=0.01 * 0.1, seed=42)
 
 # Handle null for encoding
 # Compute a safe placeholder (e.g., max value + 1)
@@ -77,8 +77,8 @@ df = df.fillna(
 # SPLIT #
 #########
 train_df, test_df = df.randomSplit([0.8, 0.2], seed=42)
-train_df.write.mode("overwrite").json("project/data/train")
-test_df.write.mode("overwrite").json("project/data/test")
+train_df.repartition(1).write.mode("overwrite").json("project/data/train")
+test_df.repartition(1).write.mode("overwrite").json("project/data/test")
 
 #################
 # PREPROCESSING #
