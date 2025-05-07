@@ -324,7 +324,7 @@ r2_rf = r2_evaluator.evaluate(predictions_rf)
 print("rmse: ", rmse_rf)
 print("r2: ", r2_rf)
 
-rf_metrics = Row(rmse=rmse_lr, r2=r2_lr)
+rf_metrics = Row(rmse=rmse_rf, r2=r2_rf)
 
 ###############################
 # Gradient Boosting Regressor #
