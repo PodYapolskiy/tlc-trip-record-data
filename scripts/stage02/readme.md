@@ -9,7 +9,6 @@
     - [Calculate correlations between price and other features](#calculate-correlations-between-price-and-other-features)
     - [Create table with duration](#create-table-with-duration)
     - [Create table with pick-up hour and drop-off hour](#create-table-with-pick-up-hour-and-drop-off-hour)
-    - [Create table with pick-up and drop-off locations and average price](#create-table-with-pick-up-and-drop-off-locations-and-average-price)
   - [Add queries to dashboard](#add-queries-to-dashboard)
 
 This stage is responsible for performing the Exploratory Data Analysis.
@@ -74,9 +73,6 @@ The table is needed for faster graph creation.
 - drop-off hour
 
 The table allows to see correlation between price and time during the day at which the trip happened.
-### Create table with pick-up and drop-off locations and average price
-
-[`q6.py`](q6.py) script creates a table with average price for certain pick-up and drop-off locations, as well as year and month.
 
 ## Add queries to dashboard
 
