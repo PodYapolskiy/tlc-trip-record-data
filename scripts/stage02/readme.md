@@ -19,7 +19,6 @@ This stage is responsible for performing the Exploratory Data Analysis.
 - [`q3.py`](q3.py) - SparkSQL script fo third query.
 - [`q4.py`](q4.py) - SparkSQL script fo forth query.
 - [`q5.py`](q5.py) - SparkSQL script fo fifth query.
-- [`q6.py`](q6.py) - SparkSQL script fo sixth query.
 - [`requirements.txt`](requirements.txt) - file with Python packages needed for Python scripts.
 
 ## Prepare data and Hive dataset
