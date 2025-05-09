@@ -13,7 +13,6 @@ from pyspark.ml.regression import LinearRegression, RandomForestRegressor, GBTRe
 from pyspark.ml.tuning import ParamGridBuilder, CrossValidator
 from pyspark.ml.evaluation import RegressionEvaluator
 from pyspark.ml.base import Transformer
-from pyspark.sql import Row
 from pyspark.ml.param.shared import HasOutputCols
 from pyspark.ml.util import DefaultParamsReadable, DefaultParamsWritable
 from pyspark.ml.feature import (
@@ -25,60 +24,42 @@ from pyspark.ml.feature import (
 start_time = time.time()
 
 
-TEAM = 18
-WAREHOUSE = "project/hive/warehouse"  # location of your Hive database in HDFS
-
 spark: SparkSession = (
-    SparkSession.builder.appName(f"{TEAM} - spark ML")
-    .master("yarn")
-    # hive
-    .config("hive.metastore.uris", "thrift://hadoop-02.uni.innopolis.ru:9883")
-    .config("spark.sql.warehouse.dir", WAREHOUSE)
+    SparkSession.builder.appName("team18 - spark ML")
     .config("spark.sql.catalogImplementation", "hive")
-    .config("spark.sql.avro.compression.codec", "snappy")
     .enableHiveSupport()
-    # driver
-    # .config("spark.driver.cores", 2)
-    # .config("spark.driver.memory", "2g")  # '2g'
-    # .config("spark.driver.maxResultSize", "2g")  # '2g'
-    # # executor
-    # .config("spark.executor.cores", 5)
-    # .config("spark.executor.memory", "4g")  # '3g'
-    # .config("spark.executors.instances", 3)
-    # .config("spark.executors.memoryOverhead", "1g")  # '1g'
-    # .config("spark.submit.deploymode", "client")
-    # .config("spark.log.level", "WARN")
+    .config("spark.log.level", "DEBUG")
     .getOrCreate()
 )
 
 
-# df = (
-#     spark.read.format("avro").option("avroCompressionCodec", "snappy").load("./0000*_0")
-# )
-# df = (
-#     spark.read.format("avro")
-#     # .option("avroCompressionCodec", "snappy")
-#     .table("team18_projectdb.green_tripdata_monthly")
-# )
+df = spark.table("team18_projectdb.green_tripdata_monthly")
+df = df.sample(fraction=0.01 * 0.1, seed=42)
 
-df = spark.sql("SELECT * FROM team18_projectdb.green_tripdata_monthly").sample(
-    fraction=0.01 * 0.1, seed=42
-)
+# todo: drop rows
 
 # Handle null for encoding
-# Compute a safe placeholder (e.g., max value + 1)
-max_value = df.agg({"ratecodeid": "max"}).collect()[0][0]
-placeholder = max_value + 1 if max_value is not None else 0
 df = df.fillna(
-    placeholder, subset=["vendorid", "ratecodeid", "payment_type", "trip_type"]
+    value=99,  # stated in dataset description
+    subset=["vendorid", "ratecodeid", "payment_type", "trip_type"],
 )
 
 #########
 # SPLIT #
 #########
 train_df, test_df = df.randomSplit([0.8, 0.2], seed=42)
-train_df.write.mode("overwrite").json("project/data/train")
-test_df.write.mode("overwrite").json("project/data/test")
+(
+    train_df.repartition(1)
+    .write.mode("overwrite")
+    .option("compression", "snappy")
+    .parquet("project/data/train")
+)
+(
+    test_df.repartition(1)
+    .write.mode("overwrite")
+    .option("compression", "snappy")
+    .parquet("project/data/test")
+)
 
 #################
 # PREPROCESSING #
@@ -171,8 +152,6 @@ num_assembler = VectorAssembler(
         "mta_tax",
         "tip_amount",
         "tolls_amount",
-        # "ehail_fee", # fals with error, to many nulls
-        "improvement_surcharge",
     ],
     outputCol="num_features",
     handleInvalid="skip",
@@ -273,11 +252,16 @@ best_model_lr.write().overwrite().save("project/models/model1")
 
 # Predict and save results
 predictions_lr = best_model_lr.transform(test_df)
-predictions_lr.select("fare_amount", "prediction").repartition(1).write.mode(
-    saveMode="overwrite"
-).csv("project/output/model1_predictions", header=True)
-predictions_lr.write.mode("overwrite").saveAsTable(
-    "team18_projectdb.linear_regression_prediction"
+(
+    predictions_lr.select("fare_amount", "prediction")
+    .repartition(1)
+    .write.mode(saveMode="overwrite")
+    .csv("project/output/model1_predictions", header=True)
+)
+(
+    predictions_lr.select("fare_amount", "prediction")
+    .write.mode("overwrite")
+    .saveAsTable("team18_projectdb.linear_regression_prediction")
 )
 
 rmse_lr = rmse_evaluator.evaluate(predictions_lr)
@@ -285,8 +269,6 @@ r2_lr = r2_evaluator.evaluate(predictions_lr)
 
 print("rmse: ", rmse_lr)
 print("r2: ", r2_lr)
-
-lr_metrics = Row(rmse=rmse_lr, r2=r2_lr)
 
 #################
 # Random Forest #
@@ -311,11 +293,16 @@ best_model_rf.write().overwrite().save("project/models/model2")
 
 # Predict and save results
 predictions_rf = best_model_rf.transform(test_df)
-predictions_rf.select("fare_amount", "prediction").repartition(1).write.mode(
-    "overwrite"
-).csv("project/output/model2_predictions", header=True)
-predictions_rf.write.mode("overwrite").saveAsTable(
-    "team18_projectdb.random_forest_prediction"
+(
+    predictions_rf.select("fare_amount", "prediction")
+    .repartition(1)
+    .write.mode("overwrite")
+    .csv("project/output/model2_predictions", header=True)
+)
+(
+    predictions_rf.select("fare_amount", "prediction")
+    .write.mode("overwrite")
+    .saveAsTable("team18_projectdb.random_forest_prediction")
 )
 
 rmse_rf = rmse_evaluator.evaluate(predictions_rf)
@@ -323,8 +310,6 @@ r2_rf = r2_evaluator.evaluate(predictions_rf)
 
 print("rmse: ", rmse_rf)
 print("r2: ", r2_rf)
-
-rf_metrics = Row(rmse=rmse_rf, r2=r2_rf)
 
 ###############################
 # Gradient Boosting Regressor #
@@ -344,11 +329,15 @@ best_model_gb.write().overwrite().save("project/models/model3")
 
 # Predict and save results
 predictions_gb = best_model_gb.transform(test_df)
-predictions_gb.select("fare_amount", "prediction").write.mode("overwrite").csv(
-    "project/output/model3_predictions", header=True
+(
+    predictions_gb.select("fare_amount", "prediction")
+    .write.mode("overwrite")
+    .csv("project/output/model3_predictions", header=True)
 )
-predictions_gb.write.mode("overwrite").saveAsTable(
-    "team18_projectdb.gradient_boosting_prediction"
+(
+    predictions_gb.write.select("fare_amount", "prediction")
+    .mode("overwrite")
+    .saveAsTable("team18_projectdb.gradient_boosting_prediction")
 )
 
 rmse_gb = rmse_evaluator.evaluate(predictions_gb)
@@ -357,7 +346,6 @@ r2_gb = r2_evaluator.evaluate(predictions_gb)
 print("rmse: ", rmse_gb)
 print("r2: ", r2_gb)
 
-gb_metrics = Row(rmse=rmse_gb, r2=r2_gb)
 
 ##################
 # COMPARE MODELS #
@@ -374,15 +362,16 @@ models = [
 models_df = spark.createDataFrame(models, ["model", "RMSE", "R2"])
 models_df.show(truncate=False)
 
-models_df.coalesce(1).write.mode("overwrite").format("csv").option("sep", ",").option(
-    "header", "true"
-).save("project/output/evaluation", format="csv")
+(
+    models_df.coalesce(1)
+    .write.mode("overwrite")
+    .format("csv")
+    .option("sep", ",")
+    .option("header", "true")
+    .save("project/output/evaluation", format="csv")
+)
 models_df.write.mode("overwrite").saveAsTable("team18_projectdb.evaluation")
 
-# models_df.write.mode("overwrite").saveAsTable("team18_projectdb.evaluation")
-spark.createDataFrame([lr_metrics, rf_metrics, gb_metrics]).write.mode(
-    "overwrite"
-).saveAsTable("team18_projectdb.metrics")
 
 end_time = time.time()
 elapsed_time = end_time - start_time

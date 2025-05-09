@@ -66,6 +66,7 @@ cp $PROJECT_ROOT/output/q2_result.txt $PROJECT_ROOT/output/q2.csv
 
 log "running q3"
 
+rm -rf $SCRIPTS/stage02/.venv
 python3 -m venv $SCRIPTS/stage02/.venv
 source $SCRIPTS/stage02/.venv/bin/activate
 pip install -r $SCRIPTS/stage02/requirements.txt
@@ -121,3 +122,27 @@ cp $PROJECT_ROOT/output/q5_result.txt $PROJECT_ROOT/output/q5.csv
 # echo "price,pickup_location,dropoff_location" >$PROJECT_ROOT/output/q6_result.txt
 # hdfs dfs -cat "${HDFS_ROOT}/project/hive/eda/q6_result/*" >>$PROJECT_ROOT/output/q6_result.txt
 # cp $PROJECT_ROOT/output/q6_result.txt > $PROJECT_ROOT/output/q6.csv
+
+log "running q7"
+
+spark-submit \
+    --master yarn \
+    --archives $BIN/.venv.tar.gz#.venv \
+    --deploy-mode cluster \
+    $SCRIPTS/stage02/q7.py
+
+echo "year,month,date,total_records" >$PROJECT_ROOT/output/q7_result.txt
+hdfs dfs -cat "${HDFS_ROOT}/project/hive/eda/q7_result/*" >>$PROJECT_ROOT/output/q7_result.txt
+cp $PROJECT_ROOT/output/q7_result.txt $PROJECT_ROOT/output/q7.csv
+
+log "running q8"
+
+spark-submit \
+    --master yarn \
+    --archives $BIN/.venv.tar.gz#.venv \
+    --deploy-mode cluster \
+    $SCRIPTS/stage02/q8.py
+
+echo "date,day_of_year,week_of_year,total_earnings,average_price,number_of_trips" >$PROJECT_ROOT/output/q8_result.txt
+hdfs dfs -cat "${HDFS_ROOT}/project/hive/eda/q8_result/*" >>$PROJECT_ROOT/output/q8_result.txt
+cp $PROJECT_ROOT/output/q8_result.txt $PROJECT_ROOT/output/q8.csv
