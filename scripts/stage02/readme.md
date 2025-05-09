@@ -9,6 +9,8 @@
     - [Calculate correlations between price and other features](#calculate-correlations-between-price-and-other-features)
     - [Create table with duration](#create-table-with-duration)
     - [Create table with pick-up hour and drop-off hour](#create-table-with-pick-up-hour-and-drop-off-hour)
+    - [Create table with total number of records per month and year](#create-table-with-total-number-of-records-per-month-and-year)
+    - [Create table with statistics by date](#create-table-with-statistics-by-date)
   - [Add queries to dashboard](#add-queries-to-dashboard)
 
 This stage is responsible for performing the Exploratory Data Analysis.
@@ -16,9 +18,12 @@ This stage is responsible for performing the Exploratory Data Analysis.
 ## File Structure
 
 - `readme.md` - you are here.
-- [`q3.py`](q3.py) - SparkSQL script fo third query.
-- [`q4.py`](q4.py) - SparkSQL script fo forth query.
-- [`q5.py`](q5.py) - SparkSQL script fo fifth query.
+- [`q3.py`](q3.py) - SparkSQL script for third query.
+- [`q4.py`](q4.py) - SparkSQL script for forth query.
+- [`q5.py`](q5.py) - SparkSQL script for fifth query.
+- [`q6.py`](q6.py) - Deprecated script for calculating price depending on pick-up and drop-off locations.
+- [`q7.py`](q7.py) - SparkSQL script for seventh query.
+- [`q8.py`](q8.py) - SparkSQL script for eighth query.
 - [`requirements.txt`](requirements.txt) - file with Python packages needed for Python scripts.
 
 ## Prepare data and Hive dataset
@@ -72,6 +77,20 @@ The table is needed for faster graph creation.
 - drop-off hour
 
 The table allows to see correlation between price and time during the day at which the trip happened.
+
+### Create table with total number of records per month and year
+
+[`q7.py`](q7.py) script calculates number of records in the database per every partition (for every month and year combination).
+The table allows to see how number of trips changed by time.
+
+### Create table with statistics by date
+
+[`q8.py`](q8.py) script calculates the trip statistics for each date within a year:
+- total earnings
+- average price
+- number of trips
+
+The table allows us to see any seasonality trends present in the data, and see if they correlate with any significant dates.
 
 ## Add queries to dashboard
 

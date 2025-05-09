@@ -6,7 +6,7 @@
   - [Download dataset](#download-dataset)
   - [Download Script](#download-script)
   - [Index Script](#index-script)
-  - [Merge Script](#merge-script)
+  - [Merge Script](#merge-script-deprecated)
   - [Create tables](#create-tables)
   - [Dataloader](#dataloader)
   - [DEMO](#demo)
