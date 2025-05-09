@@ -1,14 +1,11 @@
 import time
 import math
+from functools import reduce
 
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
 from pyspark.sql.dataframe import DataFrame
 from pyspark.ml import Pipeline
-
-# from pyspark.ml.regression import LinearRegression, RandomForestRegressor, GBTRegressor
-# from pyspark.ml.tuning import ParamGridBuilder, CrossValidator
-# from pyspark.ml.evaluation import RegressionEvaluator
 from pyspark.ml.base import Transformer
 from pyspark.ml.param.shared import HasOutputCols
 from pyspark.ml.util import DefaultParamsReadable, DefaultParamsWritable
@@ -26,7 +23,6 @@ spark: SparkSession = (
     )
     .config("spark.sql.catalogImplementation", "hive")
     .config("spark.sql.warehouse.dir", "project/hive/warehouse")
-    .config("spark.sql.catalogImplementation", "hive")
     .config("spark.sql.avro.compression.codec", "snappy")
     .config("spark.log.level", "DEBUG")
     .config("spark.ui.port", "4050")
@@ -34,8 +30,23 @@ spark: SparkSession = (
     .getOrCreate()
 )
 
-df = spark.table("team18_projectdb.green_tripdata_monthly")
-df = df.sample(fraction=0.1, seed=42)
+
+ops = []
+for year in range(2021, 2025):
+    for month in range(1, 13):
+        op = spark.sql(
+            f"""
+            select * from team18_projectdb.green_tripdata_monthly
+            where year = {year} and month = {month}
+            """
+        )
+        ops.append(op)
+
+
+df = reduce(lambda x, y: x.union(y), ops)
+# df = spark.table("team18_projectdb.green_tripdata_monthly")
+
+# df = df.sample(fraction=1, seed=42)
 
 # todo: drop rows
 
@@ -180,20 +191,42 @@ pipeline_model = pipeline.fit(train_df)
 preprocessed_train_df = pipeline_model.transform(train_df)
 preprocessed_test_df = pipeline_model.transform(test_df)
 
+########
+# JSON #
+########
+(
+    preprocessed_train_df.select("features", "fare_amount")
+    .repartition(1)
+    .write.mode("overwrite")
+    .json("project/data/train")
+)
+
+(
+    preprocessed_test_df.select("features", "fare_amount")
+    .repartition(1)
+    .write.mode("overwrite")
+    .json("project/data/test")
+)
+
+###########
+# Parquet #
+###########
 (
     preprocessed_train_df.select("features", "fare_amount")
     .repartition(1)
     .write.mode("overwrite")
     .option("compression", "snappy")
-    .parquet("project/data/train")
+    .parquet("project/data/train_parquet/")
 )
+
 (
     preprocessed_test_df.select("features", "fare_amount")
     .repartition(1)
     .write.mode("overwrite")
     .option("compression", "snappy")
-    .parquet("project/data/test")
+    .parquet("project/data/test_parquet/")
 )
+
 
 end_time = time.time()
 elapsed_time = end_time - start_time
