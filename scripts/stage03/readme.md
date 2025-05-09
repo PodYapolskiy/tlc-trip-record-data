@@ -1,6 +1,7 @@
 # `[stage03]`
 
 - [`[stage03]`](#stage03)
+  - [File structure](#file-structure)
   - [Data Preprocessing](#data-preprocessing)
     - [Encoding Categorical Features](#encoding-categorical-features)
     - [Working with Datetime](#working-with-datetime)
@@ -8,10 +9,18 @@
   - [Modeling](#modeling)
     - [Linear Regression](#linear-regression) 
     - [Random Forest Regression](#random-forest-regression)
-    - [Gradient Boosting](#gradient-boosting)
   - [Evaluation](#evaluation) 
 
 This stage is responsible for training the models and performing PDA.
+
+## File structure
+
+- [readme.md](readme.md) - you are here
+- [requirements.txt](requirements.txt) - requirements for python scripts to work
+- [preprocessing.py](preprocessing.py) - code for preprocessing the data
+- [linear_regression.py](linear_regression.py) - code for linear regression
+- [random_forest.py](random_forest.py) - code for random forest
+- [gradient_boosting.py](gradient_boosting.py) - code for gradient boosting
 
 ## Data Preprocessing
 
@@ -72,16 +81,6 @@ We used the following parameter grid for Random Forest Regression:
 ```python
 numTrees: [25, 50, 75]
 maxDepth: [3, 4, 5]
-```
-
-### Gradient Boosting
-
-Gradient Boosting attempts to train a few weak learners using Gradient Descent, and combine them into an ansamble.
-
-We used the following parameter grid for Gradient Boosting:
-
-```python
-maxDepth: [2, 3, 4, 5, 7]
 ```
 
 ## Evaluation

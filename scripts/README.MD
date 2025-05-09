@@ -27,7 +27,6 @@
     - [Modeling](#modeling)
       - [Linear Regression](#linear-regression) 
       - [Random Forest Regression](#random-forest-regression)
-      - [Gradient Boosting](#gradient-boosting)
     - [Evaluation](#evaluation) 
   - [`[stage 04]` data visualization](#stage-04-data-visualization)
 
@@ -256,16 +255,6 @@ We used the following parameter grid for Random Forest Regression:
 ```python
 numTrees: [25, 50, 75]
 maxDepth: [3, 4, 5]
-```
-
-### Gradient Boosting
-
-Gradient Boosting attempts to train a few weak learners using Gradient Descent, and combine them into an ansamble.
-
-We used the following parameter grid for Gradient Boosting:
-
-```python
-maxDepth: [2, 3, 4, 5, 7]
 ```
 
 ## Evaluation
