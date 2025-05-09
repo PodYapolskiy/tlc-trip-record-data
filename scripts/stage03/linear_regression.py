@@ -37,7 +37,7 @@ lr = LinearRegression(
     labelCol="fare_amount",
     loss="squaredError",
     solver="l-bfgs",
-    maxIter=200,
+    maxIter=20,
 )
 lr_param_grid = (
     ParamGridBuilder()
@@ -96,6 +96,12 @@ metrics_df = spark.createDataFrame(
 )
 metrics_df.write.mode("overwrite").saveAsTable(
     "team18_projectdb.linear_regression_metrics"
+)
+
+(
+    metrics_df.select("model", "RMSE", "R2")
+    .write.mode("append")
+    .saveAsTable("team18_projectdb.metrics")
 )
 
 end_time = time.time()

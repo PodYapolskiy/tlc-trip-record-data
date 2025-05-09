@@ -5,12 +5,12 @@ echo "Identified scripts directory as $SCRIPTS"
 
 . "$SCRIPTS/load-secrets.sh"
 if [ $? -ne 0 ]; then
-    exit 1
+  exit 1
 fi
 
 bash "$SCRIPTS/prepare-bin.sh"
 if [ $? -ne 0 ]; then
-    exit 1
+  exit 1
 fi
 
 BIN="$SCRIPTS/bin"
@@ -23,13 +23,9 @@ hdfs dfs -mkdir -p $HDFS_ROOT/project/models
 #################
 echo "Submitting preprocessing job..."
 spark-submit \
-    --name "Team18 | Spark ML | Preprocessing" \
-    --master yarn \
-    --driver-memory 2g \
-    --num-executors 3 \
-    --executor-memory 4g \
-    --executor-cores 5 \
-    $SCRIPTS/stage03/preprocessing.py
+  --name "Team18 | Spark ML | Preprocessing" \
+  --master yarn \
+  $SCRIPTS/stage03/preprocessing.py
 
 # Check if preprocessing succeeded
 if [ $? -ne 0 ]; then
@@ -40,19 +36,14 @@ fi
 hdfs dfs -copyToLocal -f $HDFS_ROOT/project/data/train output
 hdfs dfs -copyToLocal -f $HDFS_ROOT/project/data/test output
 
-
 #####################
 # Linear Regression #
 #####################
 echo "Submitting Linear Regression job..."
 spark-submit \
-    --name "Team18 | Spark ML | Linear Regression" \
-    --master yarn \
-    --driver-memory 2g \
-    --num-executors 3 \
-    --executor-memory 4g \
-    --executor-cores 5 \
-    $SCRIPTS/stage03/linear_regression.py
+  --name "Team18 | Spark ML | Linear Regression" \
+  --master yarn \
+  $SCRIPTS/stage03/linear_regression.py
 
 if [ $? -ne 0 ]; then
   echo "Linear Regression failed. Aborting..."
@@ -63,7 +54,6 @@ hdfs dfs -copyToLocal -f $HDFS_ROOT/project/models/model1 models/
 hdfs dfs -copyToLocal -f $HDFS_ROOT/project/output/model1_predictions output/
 
 exit 0
-
 
 ###########################
 # Random Forest Regressor #
@@ -108,7 +98,6 @@ exit 0
 
 # exit 0
 
-
 ##############
 # Comparison #
 ##############
@@ -116,8 +105,6 @@ exit 0
 hdfs dfs -copyToLocal -f $HDFS_ROOT/project/output/evaluation output/
 
 echo "Stage 3 completed successfully."
-
-
 
 # rm -rf $SCRIPTS/stage03/.venv
 # python3 -m venv $SCRIPTS/stage03/.venv
@@ -131,7 +118,6 @@ echo "Stage 3 completed successfully."
 
 # --archives $BIN/.venv.tar.gz#.venv \
 # --deploy-mode cluster \
-
 
 # spark-submit \
 #     --master yarn \
@@ -154,4 +140,3 @@ echo "Stage 3 completed successfully."
 ###############################
 # hdfs dfs -copyToLocal $HDFS_ROOT/project/models/model1 models/model1
 # hdfs dfs -cat project/output/model3_predictions.csv/*.csv > output/model3_predictions.csv
-
