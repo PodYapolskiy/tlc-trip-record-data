@@ -1,11 +1,17 @@
 # `[stage03]`
 
+- [`[stage03]`](#stage03)
+  - [Data Preprocessing](#data-preprocessing)
+    - [Encoding Categorical Features](#encoding-categorical-features)
+    - [Working with Datetime](#working-with-datetime)
+    - [Numerical Features](#numerical-features)
+  - [Modeling](#modeling)
+    - [Linear Regression](#linear-regression) 
+    - [Random Forest Regression](#random-forest-regression)
+    - [Gradient Boosting](#gradient-boosting)
+  - [Evaluation](#evaluation) 
+
 This stage is responsible for training the models and performing PDA.
-
-## File Structure
-
-- `readme.md` - you are here.
-- [`main.py`](main.py) - Spark script for data preprocessing, model training and evaluation.
 
 ## Data Preprocessing
 
@@ -65,7 +71,17 @@ We used the following parameter grid for Random Forest Regression:
 
 ```python
 numTrees: [25, 50, 75]
-maxDepth: [5, 7, 9]
+maxDepth: [3, 4, 5]
+```
+
+### Gradient Boosting
+
+Gradient Boosting attempts to train a few weak learners using Gradient Descent, and combine them into an ansamble.
+
+We used the following parameter grid for Gradient Boosting:
+
+```python
+maxDepth: [2, 3, 4, 5, 7]
 ```
 
 ## Evaluation
@@ -75,3 +91,4 @@ To evaluate the model, we used:
 - Determination coefficient (R2)
 
 These metrics are the common ones used for evaluating regression tasks, since RMSE provides general insight on how far prediction is from average value, while R2 shows how well the model captures the determination of results.
+
