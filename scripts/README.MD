@@ -282,8 +282,6 @@ Since most of the data preparation was done during previous stages, no code was 
 
 We have simply aggregated all the insights gathered during previous stages into Apache Superset Dashboard.
 
-You can visit our dashboard at: 
-
 We will briefly describe what each tab is about.
 
 ### Overview
