@@ -5,12 +5,12 @@ echo "Identified scripts directory as $SCRIPTS"
 
 . "$SCRIPTS/load-secrets.sh"
 if [ $? -ne 0 ]; then
-    exit 1
+  exit 1
 fi
 
 bash "$SCRIPTS/prepare-bin.sh"
 if [ $? -ne 0 ]; then
-    exit 1
+  exit 1
 fi
 
 BIN="$SCRIPTS/bin"
@@ -18,55 +18,56 @@ BIN="$SCRIPTS/bin"
 hdfs dfs -mkdir -p $HDFS_ROOT/project/output
 hdfs dfs -mkdir -p $HDFS_ROOT/project/models
 
-rm -rf $SCRIPTS/stage03/.venv
-python3 -m venv $SCRIPTS/stage03/.venv
-source $SCRIPTS/stage03/.venv/bin/activate
-pip install -r $SCRIPTS/stage03/requirements.txt
-rm -rf $BIN/.venv.tar.gz
-$SCRIPTS/stage03/.venv/bin/venv-pack -o $BIN/.venv.tar.gz
 
-export PYSPARK_DRIVER_PYTHON=".venv/bin/python"
-export PYSPARK_PYTHON="$SCRIPTS/stage03/.venv/bin/python"
-
+#################
+# Preprocessing #
+#################
+echo "Submitting preprocessing job..."
 spark-submit \
-    --master yarn \
-    --archives $BIN/.venv.tar.gz#.venv \
-    --deploy-mode cluster \
-    --driver-memory 2g \
-    --executor-memory 8g \
-    --executor-cores 8 \
-    $SCRIPTS/stage03/main.py
+  --name "Team18 | Spark ML | Preprocessing" \
+  --master yarn \
+  $SCRIPTS/stage03/preprocessing.py
 
-# --packages org.apache.spark:spark-avro_2.12:3.5.1 \
-# --packages ai.catboost:catboost-spark_3.5_2.12 \
-# --packages org.apache.hadoop:hadoop-aws:3.4.1 \
+hdfs dfs -cat $HDFS_ROOT/project/data/train/*.json > data/train.json
+hdfs dfs -cat $HDFS_ROOT/project/data/test/*.json > data/test.json
 
-if [ $? -eq 1 ]; then
-    echo "Stage 3 failed."
-    exit 1
-fi
-
-########
-# Data #
-########
-hdfs dfs -copyToLocal $HDFS_ROOT/project/data/train output/train.json
-hdfs dfs -copyToLocal $HDFS_ROOT/project/data/test output/test.json
 
 #####################
 # Linear Regression #
 #####################
-hdfs dfs -copyToLocal $HDFS_ROOT/project/models/model1 models/model1
-hdfs dfs -copyToLocal $HDFS_ROOT/project/output/model1_predictions output/model1_predictions.csv
+echo "Submitting Linear Regression job..."
+spark-submit \
+  --name "Team18 | Spark ML | Linear Regression" \
+  --master yarn \
+  $SCRIPTS/stage03/linear_regression.py
+
+hdfs dfs -copyToLocal -f $HDFS_ROOT/project/models/model1 models/
+hdfs dfs -copyToLocal -f $HDFS_ROOT/project/output/model1_predictions output/
+
 
 ###########################
 # Random Forest Regressor #
 ###########################
-hdfs dfs -copyToLocal $HDFS_ROOT/project/models/model2 models/model2
-hdfs dfs -copyToLocal $HDFS_ROOT/project/output/model2_predictions output/model2_predictions.csv
+echo "Submitting Random Forest Regressor job..."
+spark-submit \
+    --name "Team18 | Spark ML | Random Forest Regressor" \
+    --master yarn \
+    $SCRIPTS/stage03/random_forest.py
 
-##############
-# Comparison #
-##############
-hdfs dfs -copyToLocal $HDFS_ROOT/project/output/evaluation output/evaluation.csv
+hdfs dfs -copyToLocal -f $HDFS_ROOT/project/models/model2 models/
+hdfs dfs -copyToLocal -f $HDFS_ROOT/project/output/model2_predictions output/
+
+
+##############################
+# Graient Boosting Regressor #
+##############################
+echo "Submitting Gradient Boosting Regressor job..."
+spark-submit \
+    --name "Team18 | Spark ML | Gradient Boosting Regressor" \
+    --master yarn \
+    $SCRIPTS/stage03/gradient_boosting.py
+
+hdfs dfs -copyToLocal -f $HDFS_ROOT/project/models/model3 models/
+hdfs dfs -copyToLocal -f $HDFS_ROOT/project/output/model3_predictions output/
 
 echo "Stage 3 completed successfully."
