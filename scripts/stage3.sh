@@ -27,12 +27,6 @@ spark-submit \
   --master yarn \
   $SCRIPTS/stage03/preprocessing.py
 
-# Check if preprocessing succeeded
-if [ $? -ne 0 ]; then
-  echo "Preprocessing failed. Aborting..."
-  exit 1
-fi
-
 hdfs dfs -copyToLocal -f $HDFS_ROOT/project/data/train output
 hdfs dfs -copyToLocal -f $HDFS_ROOT/project/data/test output
 
@@ -44,11 +38,6 @@ spark-submit \
   --name "Team18 | Spark ML | Linear Regression" \
   --master yarn \
   $SCRIPTS/stage03/linear_regression.py
-
-if [ $? -ne 0 ]; then
-  echo "Linear Regression failed. Aborting..."
-  exit 1
-fi
 
 hdfs dfs -copyToLocal -f $HDFS_ROOT/project/models/model1 models/
 hdfs dfs -copyToLocal -f $HDFS_ROOT/project/output/model1_predictions output/
