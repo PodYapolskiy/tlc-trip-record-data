@@ -16,10 +16,6 @@ spark: SparkSession = (
     .config("spark.log.level", "DEBUG")
     .config("spark.ui.port", "4050")
     .enableHiveSupport()
-    .config(
-        "spark.jars.packages",
-        "ai.catboost:catboost-spark_3.5_2.12",
-    )
     .getOrCreate()
 )
 
@@ -30,7 +26,7 @@ rmse_evaluator = RegressionEvaluator(metricName="rmse", labelCol="fare_amount")
 r2_evaluator = RegressionEvaluator(metricName="r2", labelCol="fare_amount")
 
 gb = GBTRegressor(featuresCol="features", labelCol="fare_amount", seed=42, maxIter=50)
-gb_param_grid = ParamGridBuilder().addGrid(gb.maxDepth, [2, 3, 4, 5, 7])
+gb_param_grid = ParamGridBuilder().addGrid(gb.maxDepth, [2, 3, 4, 5, 7]).build()
 cv = CrossValidator(
     estimator=gb,
     estimatorParamMaps=gb_param_grid,
@@ -52,8 +48,8 @@ predictions_gb = best_model_gb.transform(preprocessed_test_df)
     .csv("project/output/model3_predictions", header=True)
 )
 (
-    predictions_gb.write.select("fare_amount", "prediction")
-    .mode("overwrite")
+    predictions_gb.select("fare_amount", "prediction")
+    .write.mode("overwrite")
     .saveAsTable("team18_projectdb.gradient_boosting_prediction")
 )
 
